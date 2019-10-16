@@ -14,10 +14,6 @@ gd32vf103-pac = "0.1"
 riscv = "0.5.4"
 riscv-rt = { version = "0.6.1", optional = true }
 
-[dependencies.void]
-default-features = false
-version = "1.0.2"
-
 [dependencies.embedded-hal]
 version = "0.2.3"
 features = ["unproven"]
