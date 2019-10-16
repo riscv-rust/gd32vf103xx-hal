@@ -3,3 +3,4 @@
 Cargo.lock
 examples/
 memory.x
+.cargo/
