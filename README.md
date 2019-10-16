@@ -4,9 +4,11 @@
 
 # `gd32vf103xx-hal`
 
-> HAL for gd32vf103 variants from the official RISC-V Rust Team
+> HAL for gd32vf103 variants 
 
 This project is developed and maintained by the [RISC-V team][team].
+
+Alternative to [gd32vf103-hal](https://github.com/luojia65/gd32vf103-hal)
 
 ## [Documentation](https://docs.rs/crate/gd32vf103-pac)
 
