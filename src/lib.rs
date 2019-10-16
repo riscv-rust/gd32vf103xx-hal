@@ -12,3 +12,4 @@ use embedded_hal as hal;
 pub mod gpio;
 pub mod rcu;
 pub mod backup_domain;
+pub mod prelude;
