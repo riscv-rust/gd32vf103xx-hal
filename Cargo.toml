@@ -10,10 +10,35 @@ license = "ISC"
 edition = "2018"
 
 [dependencies]
-embedded-hal = "0.2"
 gd32vf103-pac = "0.1"
 riscv = "0.5.4"
 riscv-rt = { version = "0.6.1", optional = true }
 
+[dependencies.void]
+default-features = false
+version = "1.0.2"
+
+[dependencies.embedded-hal]
+version = "0.2.3"
+features = ["unproven"]
+
+[dev-dependencies]
+panic-halt = "0.2"
+
 [features]
 rt = ["riscv-rt"]
+
+[profile.dev]
+incremental = false
+codegen-units = 1
+
+[profile.release]
+codegen-units = 1
+debug = true
+lto = true
+
+[[example]]
+name = "light_led"
+required-features = ["rt"]
+
+
