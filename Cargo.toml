@@ -36,9 +36,3 @@ codegen-units = 1
 codegen-units = 1
 debug = true
 lto = true
-
-[[example]]
-name = "light_led"
-required-features = ["rt"]
-
-
