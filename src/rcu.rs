@@ -189,6 +189,7 @@ bus! {
     TIMER3 => (APB1, timer3en, timer3rst),
     USART0 => (APB2, usart0en, usart0rst),
     USART1 => (APB1, usart1en, usart1rst),
+    USART2 => (APB1, usart2en, usart2rst),
     UART3 => (APB1, uart3en, uart3rst),
     WWDGT => (APB1, wwdgten, wwdgtrst),
 }
