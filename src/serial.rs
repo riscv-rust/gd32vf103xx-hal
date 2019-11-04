@@ -50,7 +50,7 @@ use embedded_hal::serial::Write;
 use crate::gpio::gpioa::{PA10, PA2, PA3, PA9};
 use crate::gpio::gpiob::{PB10, PB11};
 use crate::gpio::{Alternate, Floating, Input, PushPull};
-use crate::rcu::{RcuBus, Enable, Reset};
+use crate::rcu::{Enable, Reset};
 use crate::clock::Clocks;
 use crate::time::{U32Ext, Bps};
 
@@ -223,15 +223,14 @@ macro_rules! hal {
                     pins: PINS,
                     //mapr: &mut MAPR,
                     config: Config,
-                    clocks: Clocks,
-                    apb: &mut <$USARTX as RcuBus>::Bus,
+                    clocks: Clocks
                 ) -> Self
                 where
                     PINS: Pins<$USARTX>,
                 {
                     // enable and reset $USARTX
-                    $USARTX::enable(apb);
-                    $USARTX::reset(apb);
+                    $USARTX::enable();
+                    $USARTX::reset();
 
 //                    #[allow(unused_unsafe)]
 //                    mapr.modify_mapr(|_, w| unsafe{

@@ -1,4 +1,3 @@
-use crate::rcu::APB2;
 use core::marker::PhantomData;
 use riscv::interrupt;
 
@@ -8,7 +7,7 @@ pub trait GpioExt {
     type Parts;
 
     /// Splits the GPIO block into independent pins and registers
-    fn split(self, apb2: &mut APB2) -> Self::Parts;
+    fn split(self) -> Self::Parts;
 }
 
 /// Marker trait for active states.
@@ -168,7 +167,7 @@ macro_rules! gpio {
             use core::marker::PhantomData;
             use crate::hal::digital::v2::{OutputPin, InputPin, StatefulOutputPin, toggleable};
             use crate::pac::$GPIOX;
-            use crate::rcu::{APB2, Enable, Reset};
+            use crate::rcu::{Enable, Reset};
             use super::{
                 PeripheralAccess,
                 PortMode,
@@ -205,9 +204,9 @@ macro_rules! gpio {
             impl GpioExt for $GPIOX {
                 type Parts = Parts;
 
-                fn split(self, apb: &mut APB2) -> Parts {
-                    $GPIOX::enable(apb);
-                    $GPIOX::reset(apb);
+                fn split(self) -> Parts {
+                    $GPIOX::enable();
+                    $GPIOX::reset();
 
                     Parts {
                         $(

@@ -1,5 +1,5 @@
 use crate::pac::{rcu, RCU, PMU};
-
+use riscv::interrupt;
 use crate::backup_domain::BackupDomain;
 
 
@@ -12,9 +12,9 @@ pub trait RcuExt {
 impl RcuExt for RCU {
     fn constrain(self) -> Rcu {
         Rcu {
-            ahb: AHB { _0: () },
-            apb1: APB1 { _0: () },
-            apb2: APB2 { _0: () },
+            ahb: AHB::new(),
+            apb1: APB1::new(),
+            apb2: APB2::new(),
             //cfgr: CFGR {
                 //hse: None,
                 //hclk: None,
@@ -46,6 +46,10 @@ pub struct AHB {
 }
 
 impl AHB {
+    fn new() -> Self {
+        Self { _0: () }
+    }
+
     // TODO remove `allow`
     #[allow(dead_code)]
     pub(crate) fn en(&mut self) -> &rcu::AHBEN {
@@ -61,6 +65,10 @@ pub struct APB1 {
 
 
 impl APB1 {
+    fn new() -> Self {
+        Self { _0: () }
+    }
+
     pub(crate) fn en(&mut self) -> &rcu::APB1EN {
         // NOTE(unsafe) this proxy grants exclusive access to this register
         unsafe { &(*RCU::ptr()).apb1en }
@@ -88,6 +96,10 @@ pub struct APB2 {
 }
 
 impl APB2 {
+    fn new() -> Self {
+        Self { _0: () }
+    }
+
     pub(crate) fn en(&mut self) -> &rcu::APB2EN {
         // NOTE(unsafe) this proxy grants exclusive access to this register
         unsafe { &(*RCU::ptr()).apb2en }
@@ -133,13 +145,13 @@ pub trait RcuBus {
 
 /// Enable/disable peripheral
 pub(crate) trait Enable: RcuBus {
-    fn enable(apb: &mut Self::Bus);
-    fn disable(apb: &mut Self::Bus);
+    fn enable();
+    fn disable();
 }
 
 /// Reset peripheral
 pub(crate) trait Reset: RcuBus {
-    fn reset(apb: &mut Self::Bus);
+    fn reset();
 }
 
 macro_rules! bus {
@@ -150,19 +162,29 @@ macro_rules! bus {
             }
             impl Enable for crate::pac::$PER {
                 #[inline(always)]
-                fn enable(apb: &mut Self::Bus) {
-                    apb.en().modify(|_, w| w.$peren().set_bit());
+                fn enable() {
+                    let mut apb = <$apbX>::new();
+                    interrupt::free(|_| {
+                        apb.en().modify(|_, w| w.$peren().set_bit());
+                    });
                 }
+
                 #[inline(always)]
-                fn disable(apb: &mut Self::Bus) {
-                    apb.en().modify(|_, w| w.$peren().clear_bit());
+                fn disable() {
+                    let mut apb = <$apbX>::new();
+                    interrupt::free(|_| {
+                        apb.en().modify(|_, w| w.$peren().clear_bit());
+                    });
                 }
             }
             impl Reset for crate::pac::$PER {
                 #[inline(always)]
-                fn reset(apb: &mut Self::Bus) {
-                    apb.rstr().modify(|_, w| w.$perrst().set_bit());
-                    apb.rstr().modify(|_, w| w.$perrst().clear_bit());
+                fn reset() {
+                    let mut apb = <$apbX>::new();
+                    interrupt::free(|_| {
+                        apb.rstr().modify(|_, w| w.$perrst().set_bit());
+                        apb.rstr().modify(|_, w| w.$perrst().clear_bit());
+                    });
                 }
             }
         )+
