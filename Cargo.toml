@@ -1,6 +1,6 @@
 [package]
 name = "gd32vf103xx-hal"
-version = "0.1.0"
+version = "0.0.0"
 authors = ["The RISC-V Team <risc-v@teams.rust-embedded.org>"]
 repository = "https://github.com/riscv-rust/gd32vf103xx-hal"
 categories = ["embedded", "hardware-support", "no-std"]
