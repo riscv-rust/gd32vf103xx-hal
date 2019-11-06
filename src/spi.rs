@@ -2,7 +2,7 @@
 
 use nb;
 
-pub use crate::hal::spi::{Mode, Phase, Polarity};
+pub use crate::hal::spi::{Mode, Phase, Polarity, MODE_0, MODE_1, MODE_2, MODE_3};
 use crate::pac::{spi0, SPI0, SPI1};
 use crate::gpio::gpioa::{PA5, PA6, PA7};
 use crate::gpio::gpiob::{PB13, PB14, PB15, PB3, PB4, PB5};
