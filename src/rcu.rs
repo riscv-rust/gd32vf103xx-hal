@@ -206,6 +206,7 @@ bus! {
     I2C1 => (APB1, i2c1en, i2c1rst),
     SPI0 => (APB2, spi0en, spi0rst),
     SPI1 => (APB1, spi1en, spi1rst),
+    SPI2 => (APB1, spi2en, spi2rst),
     TIMER1 => (APB1, timer1en, timer1rst),
     TIMER2 => (APB1, timer2en, timer2rst),
     TIMER3 => (APB1, timer3en, timer3rst),
