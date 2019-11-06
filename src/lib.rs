@@ -16,4 +16,5 @@ pub mod rcu;
 pub mod backup_domain;
 pub mod prelude;
 pub mod serial;
+pub mod spi;
 pub mod time;
