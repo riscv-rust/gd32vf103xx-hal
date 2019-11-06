@@ -71,7 +71,7 @@ pub struct Spi<SPI, PINS> {
 }
 
 impl<PINS: Pins<SPI0>> Spi<SPI0, PINS> {
-    pub fn new(
+    pub fn spi0(
         spi: SPI0,
         pins: PINS,
         mode: Mode,
@@ -80,12 +80,12 @@ impl<PINS: Pins<SPI0>> Spi<SPI0, PINS> {
     ) -> Self
     {
         SPI0::remap(PINS::REMAP);
-        Spi::_new(spi, pins, mode, freq, clocks)
+        Spi::new(spi, pins, mode, freq, clocks)
     }
 }
 
 impl<PINS: Pins<SPI1>> Spi<SPI1, PINS> {
-    pub fn new(
+    pub fn spi1(
         spi: SPI1,
         pins: PINS,
         mode: Mode,
@@ -93,13 +93,13 @@ impl<PINS: Pins<SPI1>> Spi<SPI1, PINS> {
         clocks: &Clocks
     ) -> Self
     {
-        Spi::_new(spi, pins, mode, freq, clocks)
+        Spi::new(spi, pins, mode, freq, clocks)
     }
 }
 
 impl<SPI, PINS> Spi<SPI, PINS> where SPI: SpiX
 {
-    fn _new(
+    fn new(
         spi: SPI,
         pins: PINS,
         mode: Mode,
