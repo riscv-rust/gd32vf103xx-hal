@@ -12,10 +12,12 @@ if: (branch = staging OR branch = trying OR branch = master) OR (type = pull_req
 
 
 install:
-  - ci/install.sh
+  - rustup target add $TARGET
 
 script:
-  - ci/script.sh
+  - cargo check --target $TARGET
+  - cargo check --target $TARGET --features rt
+
 
 branches:
   only:
