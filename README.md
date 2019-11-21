@@ -10,7 +10,7 @@ This project is developed and maintained by the [RISC-V team][team].
 
 Alternative to [gd32vf103-hal](https://github.com/luojia65/gd32vf103-hal)
 
-## [Documentation](https://docs.rs/crate/gd32vf103-hal)
+## [Documentation](https://docs.rs/crate/gd32vf103xx-hal)
 
 ## License
 
