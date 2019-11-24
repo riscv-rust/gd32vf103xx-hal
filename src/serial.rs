@@ -44,8 +44,7 @@ use embedded_hal::serial::Write;
 use crate::gpio::gpioa::{PA10, PA2, PA3, PA9};
 use crate::gpio::gpiob::{PB10, PB11};
 use crate::gpio::{Alternate, Floating, Input, PushPull};
-use crate::rcu::{Enable, Reset};
-use crate::clock::Clocks;
+use crate::rcu::{Enable, Reset, Clocks};
 use crate::time::{U32Ext, Bps};
 
 /// Interrupt event
