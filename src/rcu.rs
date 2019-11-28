@@ -140,7 +140,7 @@ impl CCTL {
     }
 
     /// Freezes clock configuration, making it effective
-    pub fn freese(self) -> Clocks {
+    pub fn freeze(self) -> Clocks {
         const IRC8M: u32 = 8_000_000;
 
         let target_sysclk = self.sysclk.unwrap_or(IRC8M);
