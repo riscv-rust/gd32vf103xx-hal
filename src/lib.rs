@@ -19,3 +19,4 @@ pub mod spi;
 pub mod time;
 pub mod timer;
 pub mod delay;
+pub mod pwm;
