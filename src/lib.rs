@@ -17,3 +17,6 @@ pub mod prelude;
 pub mod serial;
 pub mod spi;
 pub mod time;
+pub mod timer;
+pub mod delay;
+pub mod pwm;
