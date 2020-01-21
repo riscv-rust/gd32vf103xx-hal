@@ -1,5 +1,5 @@
 use crate::time::Hertz;
-use crate::rcu::{Clocks, APB1, APB2};
+use crate::rcu::{Clocks, Enable, Reset};
 
 use gd32vf103_pac::{TIMER0, TIMER1, TIMER2, TIMER3, TIMER4, TIMER5, TIMER6};
 use embedded_hal::timer::{CountDown, Periodic};
@@ -19,15 +19,13 @@ pub enum Event {
 }
 
 macro_rules! hal {
-    ($($TIM:ident: ($tim:ident, $timXen:ident, $timXrst:ident, $APB:ident),)+) => {
+    ($($TIM:ident: $tim:ident,)+) => {
         $(
             impl Timer<$TIM> {
-                pub fn $tim<T>(timer: $TIM, timeout: T, clocks: Clocks, apb: &mut $APB) -> Self
+                pub fn $tim<T>(timer: $TIM, timeout: T, clocks: Clocks) -> Self
                     where T: Into<Hertz> {
-                    apb.en().modify(|_r, w| w.$timXen().set_bit());
-                    apb.rstr().modify(|_r, w| w.$timXrst().set_bit());
-                    apb.rstr().modify(|_r, w| w.$timXrst().clear_bit());
-
+                    $TIM::enable();
+                    $TIM::reset();
                     let mut t = Timer {
                         clk: clocks,
                         tim: timer,
@@ -85,11 +83,11 @@ macro_rules! hal {
 }
 
 hal! {
-    TIMER0: (timer0, timer0en, timer0rst, APB2),
-    TIMER1: (timer1, timer1en, timer1rst, APB1),
-    TIMER2: (timer2, timer2en, timer2rst, APB1),
-    TIMER3: (timer3, timer3en, timer3rst, APB1),
-    TIMER4: (timer4, timer4en, timer4rst, APB1),
-    TIMER5: (timer5, timer5en, timer5rst, APB1),
-    TIMER6: (timer6, timer6en, timer6rst, APB1),
+    TIMER0: timer0,
+    TIMER1: timer1,
+    TIMER2: timer2,
+    TIMER3: timer3,
+    TIMER4: timer4,
+    TIMER5: timer5,
+    TIMER6: timer6,
 }

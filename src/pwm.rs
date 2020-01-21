@@ -4,7 +4,7 @@ use gd32vf103_pac::{TIMER0, TIMER1, TIMER2, TIMER3, TIMER4};
 use crate::gpio::{Alternate, PushPull};
 use crate::gpio::gpioa::*;
 use crate::gpio::gpiob::*;
-use crate::rcu::{APB1, APB2, Clocks};
+use crate::rcu::{Enable, Reset, Clocks};
 use crate::time::{Hertz, U32Ext};
 
 pub trait PwmChannelPin<TIMER> {}
@@ -56,12 +56,11 @@ pub struct PwmTimer<'a, TIMER> {
 pub struct Channel(pub u8);
 
 macro_rules! pwm_timer {
-    ($($TIM:ident: ($tim:ident, $timXen:ident, $timXrst:ident, $APB:ident, $cvtype:ty),)+) => {
+    ($($TIM:ident: ($tim:ident, $cvtype:ty),)+) => {
         $(
             impl<'a> PwmTimer<'a, $TIM> {
                 pub fn new(timer: $TIM,
                            clocks: Clocks,
-                           apb: &mut $APB,
                            ch0: Option<&'a dyn PwmChannelPin<$TIM>>,
                            ch1: Option<&'a dyn PwmChannelPin<$TIM>>,
                            ch2: Option<&'a dyn PwmChannelPin<$TIM>>,
@@ -78,9 +77,8 @@ macro_rules! pwm_timer {
                         ch3,
                     };
 
-                    apb.en().modify(|_r, w| w.$timXen().set_bit());
-                    apb.rstr().modify(|_r, w| w.$timXrst().set_bit());
-                    apb.rstr().modify(|_r, w| w.$timXrst().clear_bit());
+                    $TIM::enable();
+                    $TIM::reset();
 
                     timer
                 }
@@ -198,9 +196,9 @@ macro_rules! pwm_timer {
 pwm_timer! {
     // There is a quirk in the capture value register size in the SVD file.
     // For Timer0 the register is 16bits while all others have 32bits.
-    TIMER0: (timer0, timer0en, timer0rst, APB2, u16),
-    TIMER1: (timer1, timer1en, timer1rst, APB1, u32),
-    TIMER2: (timer2, timer2en, timer2rst, APB1, u32),
-    TIMER3: (timer3, timer3en, timer3rst, APB1, u32),
-    TIMER4: (timer4, timer4en, timer4rst, APB1, u32),
+    TIMER0: (timer0, u16),
+    TIMER1: (timer1, u32),
+    TIMER2: (timer2, u32),
+    TIMER3: (timer3, u32),
+    TIMER4: (timer4, u32),
 }
