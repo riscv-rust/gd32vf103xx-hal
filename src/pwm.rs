@@ -45,7 +45,7 @@ pub struct PwmTimer<'a, TIMER> {
     clocks: Clocks,
     max_duty_cycle: u16,
     period: Hertz,
-    duty: [f32; 4],
+    duty: [u16; 4],
     ch0: Option<&'a dyn PwmChannelPin<TIMER>>,
     ch1: Option<&'a dyn PwmChannelPin<TIMER>>,
     ch2: Option<&'a dyn PwmChannelPin<TIMER>>,
@@ -70,7 +70,7 @@ macro_rules! pwm_timer {
                         clocks,
                         max_duty_cycle: 0,
                         period: 0.hz(),
-                        duty: [0f32; 4],
+                        duty: [0u16; 4],
                         ch0,
                         ch1,
                         ch2,
@@ -87,7 +87,7 @@ macro_rules! pwm_timer {
             impl<'a> Pwm for PwmTimer<'a, $TIM> {
                 type Channel = Channel;
                 type Time = Hertz;
-                type Duty = f32;
+                type Duty = u16;
 
                 fn disable(&mut self, channel: Self::Channel) {
                     match channel.0 {
@@ -118,18 +118,14 @@ macro_rules! pwm_timer {
                 }
 
                 fn get_max_duty(&self) -> Self::Duty {
-                    1f32
+                    self.max_duty_cycle
                 }
 
                 fn set_duty(&mut self, channel: Self::Channel, duty: Self::Duty) {
                     let mut duty = duty;
-                    if duty <= 0f32 {
-                        duty = 0f32;
+                    if duty > self.max_duty_cycle {
+                        duty = self.max_duty_cycle
                     }
-                    if duty >= 1.0 {
-                        duty = 1.0f32;
-                    }
-                    duty = (self.max_duty_cycle as Self::Duty) * duty;
                     self.duty[channel.0 as usize] = duty;
                     self.disable(channel.clone());
                     match channel.0 {
