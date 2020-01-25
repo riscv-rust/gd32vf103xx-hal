@@ -292,27 +292,27 @@ pub struct Clocks {
 
 impl Clocks {
     /// Returns the system (core) frequency
-    pub fn sysclk(&self) -> Hertz {
+    pub const fn sysclk(&self) -> Hertz {
         self.sysclk
     }
 
     /// Returns the frequency of the AHB
-    pub fn hclk(&self) -> Hertz {
+    pub const fn hclk(&self) -> Hertz {
         self.sysclk
     }
 
     /// Returns the frequency of the APB1
-    pub fn pclk1(&self) -> Hertz {
+    pub const fn pclk1(&self) -> Hertz {
         Hertz(self.sysclk.0 / self.apb1_psc as u32)
     }
 
     /// Returns the frequency of the APB2
-    pub fn pclk2(&self) -> Hertz {
+    pub const fn pclk2(&self) -> Hertz {
         Hertz(self.sysclk.0 / self.apb2_psc as u32)
     }
 
     /// Returns the frequency of the SysTick timer
-    pub fn systick(&self) -> Hertz {
+    pub const fn systick(&self) -> Hertz {
         Hertz(self.sysclk.0 / 4)
     }
 
@@ -337,7 +337,7 @@ impl Clocks {
     }
 
     /// Returns whether the USBCLK clock frequency is valid for the USB peripheral
-    pub fn usbclk_valid(&self) -> bool {
+    pub const fn usbclk_valid(&self) -> bool {
         self.usbclk_valid
     }
 }
