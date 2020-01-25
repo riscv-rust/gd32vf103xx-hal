@@ -1,3 +1,5 @@
+//! Timers
+
 use crate::time::Hertz;
 use crate::rcu::{Clocks, Enable, Reset};
 

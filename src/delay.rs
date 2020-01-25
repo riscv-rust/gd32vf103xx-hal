@@ -1,3 +1,5 @@
+//! Delays
+
 use crate::timer::Timer;
 use crate::time::U32Ext;
 

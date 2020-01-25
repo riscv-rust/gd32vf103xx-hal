@@ -1,5 +1,6 @@
 /*!
   Registers that are not reset as long as Vbat or Vdd has power.
+
   The registers retain their values during wakes from standby mode or system resets. They also
   retain their value when Vdd is switched off as long as V_BAT is powered.
   The backup domain also contains tamper protection and writes to it must be enabled in order

@@ -1,3 +1,5 @@
+//! Pulse width modulation
+
 use embedded_hal::Pwm;
 use gd32vf103_pac::{TIMER0, TIMER1, TIMER2, TIMER3, TIMER4};
 

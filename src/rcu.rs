@@ -1,3 +1,5 @@
+//! Reset and clock unit
+
 use crate::pac::{rcu, RCU, PMU};
 use riscv::interrupt;
 use crate::backup_domain::BackupDomain;

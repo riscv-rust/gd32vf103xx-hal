@@ -1,3 +1,5 @@
+//! General Purpose Input / Output
+
 use core::marker::PhantomData;
 use riscv::interrupt;
 

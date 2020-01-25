@@ -1,3 +1,5 @@
+//! Prelude
+
 pub use crate::hal::prelude::*;
 
 pub use crate::gpio::GpioExt as _gd32vf103xx_hal_gpio_GpioExt;
