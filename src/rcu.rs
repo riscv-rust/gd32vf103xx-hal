@@ -274,6 +274,7 @@ macro_rules! base_freq {
     ($($PER:ident => $func:ident,)+) => {
         $(
             impl BaseFrequency for crate::pac::$PER {
+                #[inline(always)]
                 fn base_frequency(rcu: &Rcu) -> Hertz {
                     rcu.clocks.$func()
                 }
