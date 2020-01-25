@@ -306,24 +306,31 @@ pub(crate) trait Reset {
     fn reset(rcu: &mut Rcu);
 }
 
+macro_rules! bus_enable {
+    ($PER:ident => ($apben:ident, $peren:ident)) => {
+        impl Enable for crate::pac::$PER {
+            #[inline(always)]
+            fn enable(rcu: &mut Rcu) {
+                interrupt::free(|_| {
+                    rcu.regs.$apben.modify(|_, w| w.$peren().set_bit());
+                });
+            }
+
+            #[inline(always)]
+            fn disable(rcu: &mut Rcu) {
+                interrupt::free(|_| {
+                    rcu.regs.$apben.modify(|_, w| w.$peren().clear_bit());
+                });
+            }
+        }
+    }
+}
+
 macro_rules! bus {
     ($($PER:ident => ($apben:ident, $apbrst:ident, $peren:ident, $perrst:ident),)+) => {
         $(
-            impl Enable for crate::pac::$PER {
-                #[inline(always)]
-                fn enable(rcu: &mut Rcu) {
-                    interrupt::free(|_| {
-                        rcu.regs.$apben.modify(|_, w| w.$peren().set_bit());
-                    });
-                }
+            bus_enable!($PER => ($apben, $peren));
 
-                #[inline(always)]
-                fn disable(rcu: &mut Rcu) {
-                    interrupt::free(|_| {
-                        rcu.regs.$apben.modify(|_, w| w.$peren().clear_bit());
-                    });
-                }
-            }
             impl Reset for crate::pac::$PER {
                 #[inline(always)]
                 fn reset(rcu: &mut Rcu) {
@@ -341,7 +348,10 @@ bus! {
     ADC0 => (apb2en, apb2rst, adc0en, adc0rst),
     ADC1 => (apb2en, apb2rst, adc1en, adc1rst),
     AFIO => (apb2en, apb2rst, afen, afrst),
+    BKP => (apb1en, apb1rst, bkpien, bkpirst),
     CAN0 => (apb1en, apb1rst, can0en, can0rst),
+    CAN1 => (apb1en, apb1rst, can1en, can1rst),
+    DAC => (apb1en, apb1rst, dacen, dacrst),
     GPIOA => (apb2en, apb2rst, paen, parst),
     GPIOB => (apb2en, apb2rst, pben, pbrst),
     GPIOC => (apb2en, apb2rst, pcen, pcrst),
@@ -349,6 +359,7 @@ bus! {
     GPIOE => (apb2en, apb2rst, peen, perst),
     I2C0 => (apb1en, apb1rst, i2c0en, i2c0rst),
     I2C1 => (apb1en, apb1rst, i2c1en, i2c1rst),
+    PMU => (apb1en, apb1rst, pmuen, pmurst),
     SPI0 => (apb2en, apb2rst, spi0en, spi0rst),
     SPI1 => (apb1en, apb1rst, spi1en, spi1rst),
     SPI2 => (apb1en, apb1rst, spi2en, spi2rst),
@@ -360,8 +371,14 @@ bus! {
     TIMER5 => (apb1en, apb1rst, timer5en, timer5rst),
     TIMER6 => (apb1en, apb1rst, timer6en, timer6rst),
     UART3 => (apb1en, apb1rst, uart3en, uart3rst),
+    UART4 => (apb1en, apb1rst, uart4en, uart4rst),
     USART0 => (apb2en, apb2rst, usart0en, usart0rst),
     USART1 => (apb1en, apb1rst, usart1en, usart1rst),
     USART2 => (apb1en, apb1rst, usart2en, usart2rst),
+    USBFS_GLOBAL => (ahben, ahbrst, usbfsen, usbfsrst),
     WWDGT => (apb1en, apb1rst, wwdgten, wwdgtrst),
 }
+bus_enable!(CRC => (ahben, crcen));
+bus_enable!(DMA0 => (ahben, dma0en));
+bus_enable!(DMA1 => (ahben, dma1en));
+bus_enable!(EXMC => (ahben, exmcen));
