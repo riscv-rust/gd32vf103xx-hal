@@ -6,10 +6,8 @@ use gd32vf103_pac::{TIMER0, TIMER1, TIMER2, TIMER3, TIMER4};
 use crate::gpio::{Alternate, PushPull};
 use crate::gpio::gpioa::*;
 use crate::gpio::gpiob::*;
-use crate::rcu::{Enable, Reset, Clocks};
+use crate::rcu::{Rcu, Enable, Reset, BaseFrequency};
 use crate::time::{Hertz, U32Ext};
-
-use core::ptr;
 
 pub trait PwmChannelPin<TIMER> {}
 macro_rules! pwm_pin {
@@ -46,7 +44,7 @@ pwm_pin!(TIMER4, PA3);
 
 pub struct PwmTimer<'a, TIMER> {
     timer: TIMER,
-    clocks: Clocks,
+    timer_clock: Hertz,
     max_duty_cycle: u16,
     period: Hertz,
     duty: [u16; 4],
@@ -64,14 +62,14 @@ macro_rules! pwm_timer {
         $(
             impl<'a> PwmTimer<'a, $TIM> {
                 pub fn new(timer: $TIM,
-                           clocks: Clocks,
+                           rcu: &mut Rcu,
                            ch0: Option<&'a dyn PwmChannelPin<$TIM>>,
                            ch1: Option<&'a dyn PwmChannelPin<$TIM>>,
                            ch2: Option<&'a dyn PwmChannelPin<$TIM>>,
                            ch3: Option<&'a dyn PwmChannelPin<$TIM>>) -> Self {
                     let timer = PwmTimer {
                         timer,
-                        clocks,
+                        timer_clock: $TIM::base_frequency(rcu),
                         max_duty_cycle: 0,
                         period: 0.hz(),
                         duty: [0u16; 4],
@@ -81,8 +79,8 @@ macro_rules! pwm_timer {
                         ch3,
                     };
 
-                    $TIM::enable();
-                    $TIM::reset();
+                    $TIM::enable(rcu);
+                    $TIM::reset(rcu);
 
                     timer
                 }
@@ -149,12 +147,7 @@ macro_rules! pwm_timer {
 
                     let freq = period.into();
 
-                    let mut timer_clock = self.clocks.timerx();
-                    if ptr::eq(TIMER0::ptr() as *const _, $TIM::ptr() as *const _) {
-                        timer_clock = self.clocks.timer0();
-                    }
-
-                    let ticks = timer_clock.0 / freq.0;
+                    let ticks = self.timer_clock.0 / freq.0;
                     let psc = ((ticks - 1) / (1 << 16)) as u16;
                     let car = (ticks / ((psc + 1) as u32)) as u16;
 

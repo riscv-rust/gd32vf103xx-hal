@@ -44,7 +44,7 @@ use embedded_hal::serial::Write;
 use crate::gpio::gpioa::{PA10, PA2, PA3, PA9};
 use crate::gpio::gpiob::{PB10, PB11};
 use crate::gpio::{Alternate, Floating, Input, PushPull};
-use crate::rcu::{Enable, Reset, Clocks};
+use crate::rcu::{Rcu, Enable, Reset, BaseFrequency};
 use crate::time::{U32Ext, Bps};
 
 /// Interrupt event
@@ -185,7 +185,6 @@ macro_rules! hal {
         $USARTX:ident: (
             $usartX:ident,
             $usartX_remap:ident,
-            $pclk:ident,
             $bit:ident,
             $closure:expr,
         ),
@@ -216,14 +215,14 @@ macro_rules! hal {
                     pins: PINS,
                     //mapr: &mut MAPR,
                     config: Config,
-                    clocks: Clocks
+                    rcu: &mut Rcu
                 ) -> Self
                 where
                     PINS: Pins<$USARTX>,
                 {
                     // enable and reset $USARTX
-                    $USARTX::enable();
-                    $USARTX::reset();
+                    $USARTX::enable(rcu);
+                    $USARTX::reset(rcu);
 
 //                    #[allow(unused_unsafe)]
 //                    mapr.modify_mapr(|_, w| unsafe{
@@ -234,7 +233,7 @@ macro_rules! hal {
                     usart.ctl2.write(|w| w.dent().set_bit().denr().set_bit());
 
                     // Configure baud rate
-                    let brr = clocks.$pclk().0 / config.baudrate.0;
+                    let brr = $USARTX::base_frequency(rcu).0 / config.baudrate.0;
                     assert!(brr >= 16, "impossible baud rate");
                     usart.baud.write(|w| unsafe { w.bits(brr) });
 
@@ -431,7 +430,6 @@ hal! {
     USART0: (
         usart0,
         usart0_remap,
-        pclk2,
         bit,
         |remap| remap == 1,
     ),
@@ -439,7 +437,6 @@ hal! {
     USART1: (
         usart1,
         usart1_remap,
-        pclk1,
         bit,
         |remap| remap == 1,
     ),
@@ -447,7 +444,6 @@ hal! {
     USART2: (
         usart2,
         usart2_remap,
-        pclk1,
         bits,
         |remap| remap,
     ),
