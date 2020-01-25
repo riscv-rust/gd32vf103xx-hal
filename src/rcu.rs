@@ -221,6 +221,8 @@ impl CCTL {
         rcu.cfg0.modify(|_, w| unsafe { w.ahbpsc().bits(0b0000) }); // CK_SYS
         rcu.cfg0.modify(|_, w| unsafe { w.apb1psc().bits(0b100) }); // CK_AHB / 2
         rcu.cfg0.modify(|_, w| unsafe { w.apb2psc().bits(0b000) }); // CK_AHB
+        let apb1_psc = 2;
+        let apb2_psc = 1;
 
         if self.hxtal.is_some() {
             // Enable external oscillator
@@ -273,6 +275,8 @@ impl CCTL {
 
         Clocks {
             sysclk: Hertz(target_sysclk),
+            apb1_psc,
+            apb2_psc,
             usbclk_valid
         }
     }
@@ -281,6 +285,8 @@ impl CCTL {
 #[derive(Copy, Clone)]
 pub struct Clocks {
     sysclk: Hertz,
+    apb1_psc: u8,
+    apb2_psc: u8,
     usbclk_valid: bool,
 }
 
@@ -297,12 +303,37 @@ impl Clocks {
 
     /// Returns the frequency of the APB1
     pub fn pclk1(&self) -> Hertz {
-        Hertz(self.sysclk.0 / 2)
+        Hertz(self.sysclk.0 / self.apb1_psc as u32)
     }
 
     /// Returns the frequency of the APB2
     pub fn pclk2(&self) -> Hertz {
-        self.sysclk
+        Hertz(self.sysclk.0 / self.apb2_psc as u32)
+    }
+
+    /// Returns the frequency of the SysTick timer
+    pub fn systick(&self) -> Hertz {
+        Hertz(self.sysclk.0 / 4)
+    }
+
+    /// Returns the frequency of the TIMER0 base clock
+    pub fn timer0(&self) -> Hertz {
+        let pclk2 = self.pclk2();
+        if self.apb2_psc == 1 {
+            pclk2
+        } else {
+            Hertz(pclk2.0 * 2)
+        }
+    }
+
+    /// Returns the frequency of the TIMER1..6 base clock
+    pub fn timerx(&self) -> Hertz {
+        let pclk1 = self.pclk1();
+        if self.apb1_psc == 1 {
+            pclk1
+        } else {
+            Hertz(pclk1.0 * 2)
+        }
     }
 
     /// Returns whether the USBCLK clock frequency is valid for the USB peripheral
