@@ -233,7 +233,7 @@ macro_rules! hal {
                     usart.ctl2.write(|w| w.dent().set_bit().denr().set_bit());
 
                     // Configure baud rate
-                    let brr = $USARTX::base_frequency(&rcu.clocks).0 / config.baudrate.0;
+                    let brr = $USARTX::base_frequency(rcu).0 / config.baudrate.0;
                     assert!(brr >= 16, "impossible baud rate");
                     usart.baud.write(|w| unsafe { w.bits(brr) });
 

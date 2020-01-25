@@ -267,15 +267,15 @@ impl Clocks {
 }
 
 pub(crate) trait BaseFrequency {
-    fn base_frequency(clocks: &Clocks) -> Hertz;
+    fn base_frequency(rcu: &Rcu) -> Hertz;
 }
 
 macro_rules! base_freq {
     ($($PER:ident => $func:ident,)+) => {
         $(
             impl BaseFrequency for crate::pac::$PER {
-                fn base_frequency(clocks: &Clocks) -> Hertz {
-                    clocks.$func()
+                fn base_frequency(rcu: &Rcu) -> Hertz {
+                    rcu.clocks.$func()
                 }
             }
         )+

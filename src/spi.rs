@@ -111,7 +111,7 @@ impl<SPI, PINS> Spi<SPI, PINS> where SPI: SpiX
         // disable SS output
         spi.ctl1.write(|w| w.nssdrv().clear_bit());
 
-        let br = match SPI::base_frequency(&rcu.clocks).0 / freq.into().0 {
+        let br = match SPI::base_frequency(rcu).0 / freq.into().0 {
             0 => unreachable!(),
             1..=2 => 0b000,
             3..=5 => 0b001,

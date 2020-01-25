@@ -69,7 +69,7 @@ macro_rules! pwm_timer {
                            ch3: Option<&'a dyn PwmChannelPin<$TIM>>) -> Self {
                     let timer = PwmTimer {
                         timer,
-                        timer_clock: $TIM::base_frequency(&rcu.clocks),
+                        timer_clock: $TIM::base_frequency(rcu),
                         max_duty_cycle: 0,
                         period: 0.hz(),
                         duty: [0u16; 4],

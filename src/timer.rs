@@ -29,7 +29,7 @@ macro_rules! hal {
                     $TIM::enable(rcu);
                     $TIM::reset(rcu);
                     let mut t = Timer {
-                        timer_clock: $TIM::base_frequency(&rcu.clocks),
+                        timer_clock: $TIM::base_frequency(rcu),
                         tim: timer,
                         timeout: Hertz(0),
                     };
