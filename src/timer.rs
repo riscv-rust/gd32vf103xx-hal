@@ -1,7 +1,7 @@
 //! Timers
 
 use crate::time::Hertz;
-use crate::rcu::{Clocks, Enable, Reset};
+use crate::rcu::{Rcu, Clocks, Enable, Reset};
 
 use gd32vf103_pac::{TIMER0, TIMER1, TIMER2, TIMER3, TIMER4, TIMER5, TIMER6};
 use embedded_hal::timer::{CountDown, Periodic};
@@ -26,12 +26,12 @@ macro_rules! hal {
     ($($TIM:ident: $tim:ident,)+) => {
         $(
             impl Timer<$TIM> {
-                pub fn $tim<T>(timer: $TIM, timeout: T, clocks: Clocks) -> Self
+                pub fn $tim<T>(timer: $TIM, timeout: T, rcu: &mut Rcu) -> Self
                     where T: Into<Hertz> {
-                    $TIM::enable();
-                    $TIM::reset();
+                    $TIM::enable(rcu);
+                    $TIM::reset(rcu);
                     let mut t = Timer {
-                        clk: clocks,
+                        clk: rcu.clocks,
                         tim: timer,
                         timeout: Hertz(0),
                     };

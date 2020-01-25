@@ -6,7 +6,7 @@ use gd32vf103_pac::{TIMER0, TIMER1, TIMER2, TIMER3, TIMER4};
 use crate::gpio::{Alternate, PushPull};
 use crate::gpio::gpioa::*;
 use crate::gpio::gpiob::*;
-use crate::rcu::{Enable, Reset, Clocks};
+use crate::rcu::{Rcu, Enable, Reset, Clocks};
 use crate::time::{Hertz, U32Ext};
 
 use core::ptr;
@@ -64,14 +64,14 @@ macro_rules! pwm_timer {
         $(
             impl<'a> PwmTimer<'a, $TIM> {
                 pub fn new(timer: $TIM,
-                           clocks: Clocks,
+                           rcu: &mut Rcu,
                            ch0: Option<&'a dyn PwmChannelPin<$TIM>>,
                            ch1: Option<&'a dyn PwmChannelPin<$TIM>>,
                            ch2: Option<&'a dyn PwmChannelPin<$TIM>>,
                            ch3: Option<&'a dyn PwmChannelPin<$TIM>>) -> Self {
                     let timer = PwmTimer {
                         timer,
-                        clocks,
+                        clocks: rcu.clocks,
                         max_duty_cycle: 0,
                         period: 0.hz(),
                         duty: [0u16; 4],
@@ -81,8 +81,8 @@ macro_rules! pwm_timer {
                         ch3,
                     };
 
-                    $TIM::enable();
-                    $TIM::reset();
+                    $TIM::enable(rcu);
+                    $TIM::reset(rcu);
 
                     timer
                 }

@@ -1,123 +1,44 @@
 //! Reset and clock unit
 
-use crate::pac::{rcu, RCU, PMU};
+use crate::pac::{RCU, PMU};
 use riscv::interrupt;
 use crate::backup_domain::BackupDomain;
 use crate::time::Hertz;
 use core::cmp;
 
 
-/// Extension trait that constrains the `RCU` peripheral
+/// Extension trait that sets up the `RCU` peripheral
 pub trait RcuExt {
-    /// Constrains the `RCU` peripheral so it plays nicely with the other abstractions
-    fn constrain(self) -> Rcu;
+    /// Configure the clocks of the `RCU` peripheral
+    fn configure(self) -> UnconfiguredRcu;
 }
 
 impl RcuExt for RCU {
-    fn constrain(self) -> Rcu {
-        Rcu {
-            ahb: AHB::new(),
-            apb1: APB1::new(),
-            apb2: APB2::new(),
-            cctl: CCTL::new(),
-            bkp: BKP { _0: () },
-        }
+    fn configure(self) -> UnconfiguredRcu {
+        UnconfiguredRcu::new(self)
     }
 }
 
-/// Constrained RCU peripheral
+/// Configured RCU peripheral
 pub struct Rcu {
-    /// AMBA High-performance Bus (AHB) registers
-    pub ahb: AHB,
-    /// Advanced Peripheral Bus 1 (APB1) registers
-    pub apb1: APB1,
-    /// Advanced Peripheral Bus 2 (APB2) registers
-    pub apb2: APB2,
-    pub cctl: CCTL,
+    /// Frozen clock frequencies
+    pub clocks: Clocks,
     pub bkp: BKP,
+    pub(crate) regs: RCU,
 }
 
-/// AMBA High-performance Bus (AHB) registers
-pub struct AHB {
-    _0: (),
-}
-
-impl AHB {
-    fn new() -> Self {
-        Self { _0: () }
-    }
-
-    // TODO remove `allow`
-    #[allow(dead_code)]
-    pub(crate) fn en(&mut self) -> &rcu::AHBEN {
-        // NOTE(unsafe) this proxy grants exclusive access to this register
-        unsafe { &(*RCU::ptr()).ahben }
-    }
-}
-
-/// Advanced Peripheral Bus 1 (APB1) registers
-pub struct APB1 {
-    _0: (),
-}
-
-
-impl APB1 {
-    fn new() -> Self {
-        Self { _0: () }
-    }
-
-    pub(crate) fn en(&mut self) -> &rcu::APB1EN {
-        // NOTE(unsafe) this proxy grants exclusive access to this register
-        unsafe { &(*RCU::ptr()).apb1en }
-    }
-
-    pub(crate) fn rstr(&mut self) -> &rcu::APB1RST {
-        // NOTE(unsafe) this proxy grants exclusive access to this register
-        unsafe { &(*RCU::ptr()).apb1rst }
-    }
-}
-
-
-impl APB1 {
-    /// Set power interface clock (PWREN) bit in RCU_APB1EN
-    pub fn set_pwren(&mut self) {
-        self.en().modify(|_r, w| {
-            w.pmuen().set_bit()
-        })
-    }
-}
-
-/// Advanced Peripheral Bus 2 (APB2) registers
-pub struct APB2 {
-    _0: (),
-}
-
-impl APB2 {
-    fn new() -> Self {
-        Self { _0: () }
-    }
-
-    pub(crate) fn en(&mut self) -> &rcu::APB2EN {
-        // NOTE(unsafe) this proxy grants exclusive access to this register
-        unsafe { &(*RCU::ptr()).apb2en }
-    }
-
-    pub(crate) fn rstr(&mut self) -> &rcu::APB2RST {
-        // NOTE(unsafe) this proxy grants exclusive access to this register
-        unsafe { &(*RCU::ptr()).apb2rst }
-    }
-}
-
-pub struct CCTL {
+pub struct UnconfiguredRcu {
     hxtal: Option<u32>,
     sysclk: Option<u32>,
+    regs: RCU,
 }
 
-impl CCTL {
-    fn new() -> Self {
+impl UnconfiguredRcu {
+    fn new(rcu: RCU) -> Self {
         Self {
             hxtal: None,
             sysclk: None,
+            regs: rcu,
         }
     }
 
@@ -142,7 +63,7 @@ impl CCTL {
     }
 
     /// Freezes clock configuration, making it effective
-    pub fn freeze(self) -> Clocks {
+    pub fn freeze(self) -> Rcu {
         const IRC8M: u32 = 8_000_000;
 
         let target_sysclk = self.sysclk.unwrap_or(IRC8M);
@@ -273,11 +194,17 @@ impl CCTL {
             usbclk_valid = false;
         }
 
-        Clocks {
+        let clocks = Clocks {
             sysclk: Hertz(target_sysclk),
             apb1_psc,
             apb2_psc,
             usbclk_valid
+        };
+
+        Rcu {
+            clocks,
+            bkp: BKP { _0: () },
+            regs: self.regs
         }
     }
 }
@@ -348,9 +275,9 @@ pub struct BKP {
 
 impl BKP {
     /// Enables write access to the registers in the backup domain
-    pub fn constrain(self, bkp: crate::pac::BKP, apb1: &mut APB1, pmu: &mut PMU) -> BackupDomain {
+    pub fn constrain(self, bkp: crate::pac::BKP, rcu: &mut Rcu, pmu: &mut PMU) -> BackupDomain {
         // Enable the backup interface by setting PWREN and BKPEN
-        apb1.en().modify(|_r, w| {
+        rcu.regs.apb1en.modify(|_r, w| {
             w
                 .bkpien().set_bit()
                 .pmuen().set_bit()
@@ -368,53 +295,41 @@ impl BKP {
     }
 }
 
-/// Bus associated to peripheral
-pub trait RcuBus {
-    /// Bus type;
-    type Bus;
-}
-
 /// Enable/disable peripheral
-pub(crate) trait Enable: RcuBus {
-    fn enable();
-    fn disable();
+pub(crate) trait Enable {
+    fn enable(rcu: &mut Rcu);
+    fn disable(rcu: &mut Rcu);
 }
 
 /// Reset peripheral
-pub(crate) trait Reset: RcuBus {
-    fn reset();
+pub(crate) trait Reset {
+    fn reset(rcu: &mut Rcu);
 }
 
 macro_rules! bus {
-    ($($PER:ident => ($apbX:ty, $peren:ident, $perrst:ident),)+) => {
+    ($($PER:ident => ($apben:ident, $apbrst:ident, $peren:ident, $perrst:ident),)+) => {
         $(
-            impl RcuBus for crate::pac::$PER {
-                type Bus = $apbX;
-            }
             impl Enable for crate::pac::$PER {
                 #[inline(always)]
-                fn enable() {
-                    let mut apb = <$apbX>::new();
+                fn enable(rcu: &mut Rcu) {
                     interrupt::free(|_| {
-                        apb.en().modify(|_, w| w.$peren().set_bit());
+                        rcu.regs.$apben.modify(|_, w| w.$peren().set_bit());
                     });
                 }
 
                 #[inline(always)]
-                fn disable() {
-                    let mut apb = <$apbX>::new();
+                fn disable(rcu: &mut Rcu) {
                     interrupt::free(|_| {
-                        apb.en().modify(|_, w| w.$peren().clear_bit());
+                        rcu.regs.$apben.modify(|_, w| w.$peren().clear_bit());
                     });
                 }
             }
             impl Reset for crate::pac::$PER {
                 #[inline(always)]
-                fn reset() {
-                    let mut apb = <$apbX>::new();
+                fn reset(rcu: &mut Rcu) {
                     interrupt::free(|_| {
-                        apb.rstr().modify(|_, w| w.$perrst().set_bit());
-                        apb.rstr().modify(|_, w| w.$perrst().clear_bit());
+                        rcu.regs.$apbrst.modify(|_, w| w.$perrst().set_bit());
+                        rcu.regs.$apbrst.modify(|_, w| w.$perrst().clear_bit());
                     });
                 }
             }
@@ -423,30 +338,30 @@ macro_rules! bus {
 }
 
 bus! {
-    TIMER0 => (APB2, timer0en, timer0rst),
-    ADC1 => (APB2, adc1en, adc1rst),
-    CAN0 => (APB1, can0en, can0rst),
-    ADC0 => (APB2, adc0en, adc0rst),
-    AFIO => (APB2, afen, afrst),
-    GPIOA => (APB2, paen, parst),
-    GPIOB => (APB2, pben, pbrst),
-    GPIOC => (APB2, pcen, pcrst),
-    GPIOD => (APB2, pden, pdrst),
-    GPIOE => (APB2, peen, perst),
-    I2C0 => (APB1, i2c0en, i2c0rst),
-    I2C1 => (APB1, i2c1en, i2c1rst),
-    SPI0 => (APB2, spi0en, spi0rst),
-    SPI1 => (APB1, spi1en, spi1rst),
-    SPI2 => (APB1, spi2en, spi2rst),
-    TIMER1 => (APB1, timer1en, timer1rst),
-    TIMER2 => (APB1, timer2en, timer2rst),
-    TIMER3 => (APB1, timer3en, timer3rst),
-    TIMER4 => (APB1, timer4en, timer4rst),
-    TIMER5 => (APB1, timer5en, timer5rst),
-    TIMER6 => (APB1, timer6en, timer6rst),
-    USART0 => (APB2, usart0en, usart0rst),
-    USART1 => (APB1, usart1en, usart1rst),
-    USART2 => (APB1, usart2en, usart2rst),
-    UART3 => (APB1, uart3en, uart3rst),
-    WWDGT => (APB1, wwdgten, wwdgtrst),
+    TIMER0 => (apb2en, apb2rst, timer0en, timer0rst),
+    ADC1 => (apb2en, apb2rst, adc1en, adc1rst),
+    CAN0 => (apb1en, apb1rst, can0en, can0rst),
+    ADC0 => (apb2en, apb2rst, adc0en, adc0rst),
+    AFIO => (apb2en, apb2rst, afen, afrst),
+    GPIOA => (apb2en, apb2rst, paen, parst),
+    GPIOB => (apb2en, apb2rst, pben, pbrst),
+    GPIOC => (apb2en, apb2rst, pcen, pcrst),
+    GPIOD => (apb2en, apb2rst, pden, pdrst),
+    GPIOE => (apb2en, apb2rst, peen, perst),
+    I2C0 => (apb1en, apb1rst, i2c0en, i2c0rst),
+    I2C1 => (apb1en, apb1rst, i2c1en, i2c1rst),
+    SPI0 => (apb2en, apb2rst, spi0en, spi0rst),
+    SPI1 => (apb1en, apb1rst, spi1en, spi1rst),
+    SPI2 => (apb1en, apb1rst, spi2en, spi2rst),
+    TIMER1 => (apb1en, apb1rst, timer1en, timer1rst),
+    TIMER2 => (apb1en, apb1rst, timer2en, timer2rst),
+    TIMER3 => (apb1en, apb1rst, timer3en, timer3rst),
+    TIMER4 => (apb1en, apb1rst, timer4en, timer4rst),
+    TIMER5 => (apb1en, apb1rst, timer5en, timer5rst),
+    TIMER6 => (apb1en, apb1rst, timer6en, timer6rst),
+    USART0 => (apb2en, apb2rst, usart0en, usart0rst),
+    USART1 => (apb1en, apb1rst, usart1en, usart1rst),
+    USART2 => (apb1en, apb1rst, usart2en, usart2rst),
+    UART3 => (apb1en, apb1rst, uart3en, uart3rst),
+    WWDGT => (apb1en, apb1rst, wwdgten, wwdgtrst),
 }
