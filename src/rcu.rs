@@ -338,11 +338,10 @@ macro_rules! bus {
 }
 
 bus! {
-    TIMER0 => (apb2en, apb2rst, timer0en, timer0rst),
-    ADC1 => (apb2en, apb2rst, adc1en, adc1rst),
-    CAN0 => (apb1en, apb1rst, can0en, can0rst),
     ADC0 => (apb2en, apb2rst, adc0en, adc0rst),
+    ADC1 => (apb2en, apb2rst, adc1en, adc1rst),
     AFIO => (apb2en, apb2rst, afen, afrst),
+    CAN0 => (apb1en, apb1rst, can0en, can0rst),
     GPIOA => (apb2en, apb2rst, paen, parst),
     GPIOB => (apb2en, apb2rst, pben, pbrst),
     GPIOC => (apb2en, apb2rst, pcen, pcrst),
@@ -353,15 +352,16 @@ bus! {
     SPI0 => (apb2en, apb2rst, spi0en, spi0rst),
     SPI1 => (apb1en, apb1rst, spi1en, spi1rst),
     SPI2 => (apb1en, apb1rst, spi2en, spi2rst),
+    TIMER0 => (apb2en, apb2rst, timer0en, timer0rst),
     TIMER1 => (apb1en, apb1rst, timer1en, timer1rst),
     TIMER2 => (apb1en, apb1rst, timer2en, timer2rst),
     TIMER3 => (apb1en, apb1rst, timer3en, timer3rst),
     TIMER4 => (apb1en, apb1rst, timer4en, timer4rst),
     TIMER5 => (apb1en, apb1rst, timer5en, timer5rst),
     TIMER6 => (apb1en, apb1rst, timer6en, timer6rst),
+    UART3 => (apb1en, apb1rst, uart3en, uart3rst),
     USART0 => (apb2en, apb2rst, usart0en, usart0rst),
     USART1 => (apb1en, apb1rst, usart1en, usart1rst),
     USART2 => (apb1en, apb1rst, usart2en, usart2rst),
-    UART3 => (apb1en, apb1rst, uart3en, uart3rst),
     WWDGT => (apb1en, apb1rst, wwdgten, wwdgtrst),
 }
