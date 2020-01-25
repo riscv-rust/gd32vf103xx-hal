@@ -156,7 +156,7 @@ macro_rules! pwm_timer {
                     self.timer.psc.write(|w| unsafe { w.bits(psc) });
                     self.timer.car.write(|w| unsafe { w.bits(car) });
 
-                    self.timer.chctl0_output.modify(|_r, w| unsafe {
+                    self.timer.chctl0_output().modify(|_r, w| unsafe {
                         w
                             // Enable PWM Mode 0 for channel 0 and 1
                             .ch0comctl().bits(0b110)
@@ -166,7 +166,7 @@ macro_rules! pwm_timer {
                             .ch0ms().bits(0b00)
                             .ch1ms().bits(0b00)
                     });
-                    self.timer.chctl1_output.modify(|_r, w| unsafe {
+                    self.timer.chctl1_output().modify(|_r, w| unsafe {
                         w
                             // Enable PWM Mode 0 for channel 2 and 3
                             .ch2comctl().bits(0b110)

@@ -10,7 +10,7 @@ license = "ISC"
 edition = "2018"
 
 [dependencies]
-gd32vf103-pac = "0.1"
+gd32vf103-pac = "0.2"
 riscv = "0.5.4"
 riscv-rt = { version = "0.6.1", optional = true }
 nb = "0.1.2"
