@@ -7,7 +7,7 @@ use crate::pac::{spi0, SPI0, SPI1};
 use crate::gpio::gpioa::{PA5, PA6, PA7};
 use crate::gpio::gpiob::{PB13, PB14, PB15, PB3, PB4, PB5};
 use crate::gpio::{Alternate, Floating, Input, PushPull};
-use crate::rcu::{Rcu, Enable, Reset};
+use crate::rcu::{Rcu, Enable, Reset, BaseFrequency};
 use crate::time::Hertz;
 use crate::afio::Remap;
 use core::ops::Deref;
@@ -104,14 +104,14 @@ impl<SPI, PINS> Spi<SPI, PINS> where SPI: SpiX
         mode: Mode,
         freq: impl Into<Hertz>,
         rcu: &mut Rcu
-    ) -> Self where SPI: Enable + Reset {
+    ) -> Self where SPI: Enable + Reset + BaseFrequency {
         SPI::enable(rcu);
         SPI::reset(rcu);
 
         // disable SS output
         spi.ctl1.write(|w| w.nssdrv().clear_bit());
 
-        let br = match rcu.clocks.pclk2().0 / freq.into().0 {
+        let br = match SPI::base_frequency(&rcu.clocks).0 / freq.into().0 {
             0 => unreachable!(),
             1..=2 => 0b000,
             3..=5 => 0b001,
