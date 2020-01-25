@@ -7,6 +7,8 @@ use gd32vf103_pac::{TIMER0, TIMER1, TIMER2, TIMER3, TIMER4, TIMER5, TIMER6};
 use embedded_hal::timer::{CountDown, Periodic};
 use void::Void;
 
+use core::ptr;
+
 /// Hardware timer
 pub struct Timer<TIM> {
     pub(crate) tim: TIM,
@@ -59,8 +61,12 @@ macro_rules! hal {
                     self.tim.ctl0.modify(|_, w| w.cen().clear_bit());
                     self.tim.cnt.reset();
 
-                    let timer_clock = self.clk.sysclk().0;
-                    let ticks = timer_clock / self.timeout.0;
+                    let mut timer_clock = self.clk.timerx();
+                    if ptr::eq(TIMER0::ptr() as *const _, $TIM::ptr() as *const _) {
+                        timer_clock = self.clk.timer0();
+                    }
+
+                    let ticks = timer_clock.0 / self.timeout.0;
                     let psc = ((ticks - 1) / (1 << 16)) as u16;
                     let car = (ticks / ((psc + 1) as u32)) as u16;
                     self.tim.psc.write(|w| unsafe { w.bits(psc) } );

@@ -9,6 +9,8 @@ use crate::gpio::gpiob::*;
 use crate::rcu::{Enable, Reset, Clocks};
 use crate::time::{Hertz, U32Ext};
 
+use core::ptr;
+
 pub trait PwmChannelPin<TIMER> {}
 macro_rules! pwm_pin {
     ($timer:ty, $pin:ident) => {
@@ -147,8 +149,12 @@ macro_rules! pwm_timer {
 
                     let freq = period.into();
 
-                    let timer_clock = self.clocks.sysclk().0;
-                    let ticks = timer_clock / freq.0;
+                    let mut timer_clock = self.clocks.timerx();
+                    if ptr::eq(TIMER0::ptr() as *const _, $TIM::ptr() as *const _) {
+                        timer_clock = self.clocks.timer0();
+                    }
+
+                    let ticks = timer_clock.0 / freq.0;
                     let psc = ((ticks - 1) / (1 << 16)) as u16;
                     let car = (ticks / ((psc + 1) as u32)) as u16;
 
