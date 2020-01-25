@@ -1,8 +1,7 @@
 //! Reset and clock unit
 
-use crate::pac::{RCU, PMU};
+use crate::pac::RCU;
 use riscv::interrupt;
-use crate::backup_domain::BackupDomain;
 use crate::time::Hertz;
 use core::cmp;
 
@@ -23,7 +22,6 @@ impl RcuExt for RCU {
 pub struct Rcu {
     /// Frozen clock frequencies
     pub clocks: Clocks,
-    pub bkp: BKP,
     pub(crate) regs: RCU,
 }
 
@@ -203,7 +201,6 @@ impl UnconfiguredRcu {
 
         Rcu {
             clocks,
-            bkp: BKP { _0: () },
             regs: self.regs
         }
     }
@@ -266,32 +263,6 @@ impl Clocks {
     /// Returns whether the USBCLK clock frequency is valid for the USB peripheral
     pub const fn usbclk_valid(&self) -> bool {
         self.usbclk_valid
-    }
-}
-
-pub struct BKP {
-    _0: ()
-}
-
-impl BKP {
-    /// Enables write access to the registers in the backup domain
-    pub fn constrain(self, bkp: crate::pac::BKP, rcu: &mut Rcu, pmu: &mut PMU) -> BackupDomain {
-        // Enable the backup interface by setting PWREN and BKPEN
-        rcu.regs.apb1en.modify(|_r, w| {
-            w
-                .bkpien().set_bit()
-                .pmuen().set_bit()
-        });
-
-        // Enable access to the backup registers
-        pmu.ctl.modify(|_r, w| {
-            w
-                .bkpwen().set_bit()
-        });
-
-        BackupDomain {
-            _regs: bkp,
-        }
     }
 }
 
