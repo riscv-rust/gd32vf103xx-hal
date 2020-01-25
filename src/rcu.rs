@@ -266,6 +266,42 @@ impl Clocks {
     }
 }
 
+pub(crate) trait BaseFrequency {
+    fn base_frequency(clocks: &Clocks) -> Hertz;
+}
+
+macro_rules! base_freq {
+    ($($PER:ident => $func:ident,)+) => {
+        $(
+            impl BaseFrequency for crate::pac::$PER {
+                fn base_frequency(clocks: &Clocks) -> Hertz {
+                    clocks.$func()
+                }
+            }
+        )+
+    }
+}
+
+base_freq! {
+    I2C0 => pclk1,
+    I2C1 => pclk1,
+    SPI0 => pclk2,
+    SPI1 => pclk1,
+    SPI2 => pclk1,
+    TIMER0 => timer0,
+    TIMER1 => timerx,
+    TIMER2 => timerx,
+    TIMER3 => timerx,
+    TIMER4 => timerx,
+    TIMER5 => timerx,
+    TIMER6 => timerx,
+    UART3 => pclk1,
+    UART4 => pclk1,
+    USART0 => pclk2,
+    USART1 => pclk1,
+    USART2 => pclk1,
+}
+
 /// Enable/disable peripheral
 pub(crate) trait Enable {
     fn enable(rcu: &mut Rcu);
