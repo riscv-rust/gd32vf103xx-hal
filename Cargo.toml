@@ -16,6 +16,7 @@ riscv-rt = { version = "0.6.1", optional = true }
 nb = "0.1.2"
 void = { version = "1.0.2", default-features = false }
 cast = {version = "0.2.3", default-features = false }
+vcell = "0.1.2"
 
 [dependencies.embedded-hal]
 version = "0.2.3"
