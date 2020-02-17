@@ -1,4 +1,4 @@
-.section .init, "ax"
+.section .text, "ax"
 .global _mp_hook
 _mp_hook:
     la      a0, _mp_hook
