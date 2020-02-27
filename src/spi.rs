@@ -9,7 +9,7 @@ use crate::gpio::gpiob::{PB13, PB14, PB15, PB3, PB4, PB5};
 use crate::gpio::{Alternate, Floating, Input, PushPull};
 use crate::rcu::{Rcu, Enable, Reset, BaseFrequency};
 use crate::time::Hertz;
-use crate::afio::Remap;
+use crate::afio::{Afio, Remap};
 use core::ops::Deref;
 
 /// SPI error
@@ -73,12 +73,13 @@ impl<PINS: Pins<SPI0>> Spi<SPI0, PINS> {
     pub fn spi0(
         spi: SPI0,
         pins: PINS,
+        afio: &mut Afio,
         mode: Mode,
         freq: impl Into<Hertz>,
         rcu: &mut Rcu
     ) -> Self
     {
-        SPI0::remap(PINS::REMAP);
+        SPI0::remap(afio, PINS::REMAP);
         Spi::new(spi, pins, mode, freq, rcu)
     }
 }

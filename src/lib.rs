@@ -9,7 +9,7 @@ pub use gd32vf103_pac as pac;
 
 use embedded_hal as hal;
 
-mod afio;
+pub mod afio;
 pub mod exmc;
 pub mod gpio;
 pub mod rcu;
