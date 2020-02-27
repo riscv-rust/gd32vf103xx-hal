@@ -1,3 +1,5 @@
+//! Alternate Function I/Os
+
 use crate::pac::AFIO;
 use crate::rcu::{Rcu, Enable, Reset};
 use crate::gpio::{Debugger, Input, Floating};
