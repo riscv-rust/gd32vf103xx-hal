@@ -57,11 +57,16 @@ impl Afio {
     }
 }
 
-pub trait Remap {
-    type Variant;
+pub(crate) mod closed_traits {
+    use crate::afio::Afio;
 
-    fn remap(afio: &mut Afio, variant: Self::Variant);
+    pub trait Remap {
+        type Variant;
+
+        fn remap(afio: &mut Afio, variant: Self::Variant);
+    }
 }
+pub(crate) use closed_traits::*;
 
 macro_rules! remap_set {
     ($pcf0:ident, $field:ident, bool, $value:ident) => {

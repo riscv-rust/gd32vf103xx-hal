@@ -266,10 +266,6 @@ impl Clocks {
     }
 }
 
-pub(crate) trait BaseFrequency {
-    fn base_frequency(rcu: &Rcu) -> Hertz;
-}
-
 macro_rules! base_freq {
     ($($PER:ident => $func:ident,)+) => {
         $(
@@ -303,16 +299,26 @@ base_freq! {
     USART2 => pclk1,
 }
 
-/// Enable/disable peripheral
-pub(crate) trait Enable {
-    fn enable(rcu: &mut Rcu);
-    fn disable(rcu: &mut Rcu);
-}
+pub(crate) mod closed_traits {
+    use super::Rcu;
+    use crate::time::Hertz;
 
-/// Reset peripheral
-pub(crate) trait Reset {
-    fn reset(rcu: &mut Rcu);
+    /// Enable/disable peripheral
+    pub trait Enable {
+        fn enable(rcu: &mut Rcu);
+        fn disable(rcu: &mut Rcu);
+    }
+
+    /// Reset peripheral
+    pub trait Reset {
+        fn reset(rcu: &mut Rcu);
+    }
+
+    pub trait BaseFrequency {
+        fn base_frequency(rcu: &Rcu) -> Hertz;
+    }
 }
+pub(crate) use closed_traits::*;
 
 macro_rules! bus_enable {
     ($PER:ident => ($apben:ident, $peren:ident)) => {
