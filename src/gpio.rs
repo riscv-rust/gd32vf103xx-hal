@@ -23,6 +23,8 @@ pub struct Input<MODE> {
 impl<MODE> Active for Input<MODE> {}
 
 /// Used by the debugger
+///
+/// To convert this pin into a normal one, call [Afio::disable_jtag()](crate::afio::Afio::disable_jtag)
 pub struct Debugger;
 /// Floating Input
 pub struct Floating;
@@ -293,7 +295,13 @@ macro_rules! gpio {
                     /// Put the pin in an active state. The caller
                     /// must enforce that the pin is really in this
                     /// state in the hardware.
-                    pub unsafe fn activate(self) -> $PXi<Input<Floating>> {
+                    #[allow(dead_code)]
+                    pub(crate) unsafe fn activate(self) -> $PXi<Input<Floating>> {
+                        // JTAG/Serial-Wired Debug pins are in input PU/PD mode after reset.
+                        // Explicitly convert into floating inputs.
+                        let mode = PortMode::Input(InputPortConfiguration::Floating);
+                        $GPIOX::set_mode($i, mode);
+
                         $PXi { _mode: PhantomData }
                     }
                 }

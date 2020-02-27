@@ -1,5 +1,8 @@
 use crate::pac::AFIO;
 use crate::rcu::{Rcu, Enable, Reset};
+use crate::gpio::{Debugger, Input, Floating};
+use crate::gpio::gpioa::{PA13, PA14, PA15};
+use crate::gpio::gpiob::{PB3, PB4};
 
 pub trait AfioExt {
     fn constrain(self, rcu: &mut Rcu) -> Afio;
@@ -16,6 +19,40 @@ impl AfioExt for AFIO {
 
 pub struct Afio {
     afio: AFIO
+}
+
+impl Afio {
+    /// Disables the JTAG to free up PA13..PA15, PB3 and PB4 for normal use
+    pub fn disable_jtag(
+        &mut self,
+        pa13: PA13<Debugger>,
+        pa14: PA14<Debugger>,
+        pa15: PA15<Debugger>,
+        pb3: PB3<Debugger>,
+        pb4: PB4<Debugger>
+    ) -> (
+        PA13<Input<Floating>>,
+        PA14<Input<Floating>>,
+        PA15<Input<Floating>>,
+        PB3<Input<Floating>>,
+        PB4<Input<Floating>>,
+    ) {
+        // Set remap to "JTAG-DP Disabled"
+        self.afio.pcf0.modify(|_, w| unsafe {
+            w.swj_cfg().bits(0b100)
+        });
+
+        // NOTE(unsafe) The pins are now in the good state.
+        unsafe {
+            (
+                pa13.activate(),
+                pa14.activate(),
+                pa15.activate(),
+                pb3.activate(),
+                pb4.activate()
+            )
+        }
+    }
 }
 
 pub trait Remap {
