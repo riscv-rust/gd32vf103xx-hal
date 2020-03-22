@@ -11,8 +11,8 @@
 //! let mut gpioa = p.GPIOA.split();
 //!
 //! // USART0 on Pins A9 and A10
-//! let pin_tx = gpioa.pa9.into_alternate_push_pull();
-//! let pin_rx = gpioa.pa10.into_floating_input();
+//! let pin_tx = gpioa.pa9;
+//! let pin_rx = gpioa.pa10;
 //! // Create an interface struct for USART0 with 9600 Baud
 //! let serial = Serial::new(
 //!     p.USART0,
@@ -82,6 +82,30 @@ mod closed_traits {
 
     pub trait Pins<USART: Remap> {
         const REMAP: USART::Variant;
+        type Tx;
+        type Rx;
+        fn configure(self) -> (Self::Tx, Self::Rx);
+    }
+
+    macro_rules! pins {
+        ($usart:ty, $remap_type:ty, $remap_value:expr, $tx:ident, $rx:ident) => {
+            impl<TM, RM> crate::serial::Pins<$usart> for ($tx<TM>, $rx<RM>)
+            where
+                TM: crate::gpio::Active,
+                RM: crate::gpio::Active
+            {
+                const REMAP: $remap_type = $remap_value;
+                type Tx = $tx<Alternate<PushPull>>;
+                type Rx = $rx<Input<Floating>>;
+
+                #[inline(always)]
+                fn configure(self) -> (Self::Tx, Self::Rx) {
+                    let tx = self.0.into_alternate_push_pull();
+                    let rx = self.1.into_floating_input();
+                    (tx, rx)
+                }
+            }
+        }
     }
 
     impl UsartX for USART0 {
@@ -91,13 +115,8 @@ mod closed_traits {
         }
     }
 
-    impl Pins<USART0> for (PA9<Alternate<PushPull>>, PA10<Input<Floating>>) {
-        const REMAP: bool = false;
-    }
-
-    impl Pins<USART0> for (PB6<Alternate<PushPull>>, PB7<Input<Floating>>) {
-        const REMAP: bool = true;
-    }
+    pins!(USART0, bool, false, PA9, PA10);
+    pins!(USART0, bool, true, PB6, PB7);
 
     impl UsartX for USART1 {
         #[inline(always)]
@@ -106,13 +125,8 @@ mod closed_traits {
         }
     }
 
-    impl Pins<USART1> for (PA2<Alternate<PushPull>>, PA3<Input<Floating>>) {
-        const REMAP: bool = false;
-    }
-
-    impl Pins<USART1> for (PD5<Alternate<PushPull>>, PD6<Input<Floating>>) {
-        const REMAP: bool = true;
-    }
+    pins!(USART1, bool, false, PA2, PA3);
+    pins!(USART1, bool, true, PD5, PD6);
 
     impl UsartX for USART2 {
         #[inline(always)]
@@ -121,17 +135,9 @@ mod closed_traits {
         }
     }
 
-    impl Pins<USART2> for (PB10<Alternate<PushPull>>, PB11<Input<Floating>>) {
-        const REMAP: u8 = 0;
-    }
-
-    impl Pins<USART2> for (PC10<Alternate<PushPull>>, PC11<Input<Floating>>) {
-        const REMAP: u8 = 1;
-    }
-
-    impl Pins<USART2> for (PD8<Alternate<PushPull>>, PD9<Input<Floating>>) {
-        const REMAP: u8 = 0b11;
-    }
+    pins!(USART2, u8, 0, PB10, PB11);
+    pins!(USART2, u8, 1, PC10, PC11);
+    pins!(USART2, u8, 0b11, PD8, PD9);
 }
 use closed_traits::*;
 
@@ -198,9 +204,10 @@ impl Default for Config {
 }
 
 /// Serial abstraction
-pub struct Serial<USART, PINS> {
+pub struct Serial<USART, TX, RX> {
     usart: USART,
-    pins: PINS,
+    tx: TX,
+    rx: RX,
 }
 
 /// Serial receiver
@@ -213,10 +220,14 @@ pub struct Tx<USART> {
     _usart: PhantomData<USART>,
 }
 
-impl<USART: UsartX, PINS> Serial<USART, PINS>
+impl<USART: UsartX, TX, RX> Serial<USART, TX, RX>
 {
     /// Configures the serial interface and creates the interface
     /// struct.
+    ///
+    /// `pins` is a tuple specifying transmit and receive pins. Current mode of
+    /// these pins does not matter, as they are reconfigured during USART
+    /// initialization.
     ///
     /// `config` holds UART configuration such as the baud rate of the interface.
     ///
@@ -226,18 +237,22 @@ impl<USART: UsartX, PINS> Serial<USART, PINS>
     /// `afio` and `rcu` are register handles which are passed for
     /// configuration. (`afio` is used to map the USART to the
     /// corresponding pins. `rcu` is used to reset the USART.)
-    pub fn new(
+    pub fn new<PINS>(
         usart: USART,
         pins: PINS,
         config: Config,
         afio: &mut Afio,
         rcu: &mut Rcu
     ) -> Self
-    where PINS: Pins<USART>
+    where PINS: Pins<USART, Tx=TX, Rx=RX>
     {
         // enable and reset USART
         USART::enable(rcu);
         USART::reset(rcu);
+
+        // Pin configuration must happen after configuring USART clock in order
+        // to avoid junk being transmitted during initialization
+        let (tx, rx) = pins.configure();
 
         // Remap pins
         USART::remap(afio, PINS::REMAP);
@@ -286,7 +301,7 @@ impl<USART: UsartX, PINS> Serial<USART, PINS>
             w.ten().set_bit()
         });
 
-        Serial { usart, pins }
+        Serial { usart, tx, rx }
     }
 
     /// Starts listening to the USART by enabling the _Received data
@@ -310,8 +325,8 @@ impl<USART: UsartX, PINS> Serial<USART, PINS>
     }
 
     /// Returns ownership of the borrowed register handles
-    pub fn release(self) -> (USART, PINS) {
-        (self.usart, self.pins)
+    pub fn release(self) -> (USART, TX, RX) {
+        (self.usart, self.tx, self.rx)
     }
 
     /// Separates the serial struct into separate channel objects for sending (Tx) and
