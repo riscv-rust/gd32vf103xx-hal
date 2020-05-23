@@ -74,9 +74,7 @@ impl Rtc {
     pub fn select_frequency(&mut self, timeout: impl Into<Hertz>) {
         let frequency = timeout.into().0;
 
-        // The manual says that the zero value for the prescaler is not recommended, thus the
-        // minimum division factor is 2 (prescaler + 1)
-        assert!(frequency <= LXTAL_HERTZ / 2);
+        assert!(frequency <= LXTAL_HERTZ);
 
         let prescaler = LXTAL_HERTZ / frequency - 1;
         self.perform_write(|s| {
@@ -164,7 +162,6 @@ impl Rtc {
     pub fn clear_alarm_flag(&mut self) {
         self.perform_write(|s| s.regs.ctl.modify(|_, w| w.alrmif().clear_bit()))
     }
-
 
     /// Return `Ok(())` if the second flag is set, `Err(nb::WouldBlock)` otherwise.
     pub fn wait_second(&mut self) -> nb::Result<(), Infallible> {
