@@ -71,7 +71,6 @@ impl Rtc {
     }
 
     /// Selects the frequency of the RTC Timer
-    /// NOTE: Maximum frequency of 16384 Hz using the internal LSE
     pub fn select_frequency(&mut self, timeout: impl Into<Hertz>) {
         let frequency = timeout.into().0;
 
