@@ -165,6 +165,17 @@ impl Rtc {
         self.perform_write(|s| s.regs.ctl.modify(|_, w| w.alrmif().clear_bit()))
     }
 
+
+    /// Return `Ok(())` if the second flag is set, `Err(nb::WouldBlock)` otherwise.
+    pub fn wait_second(&mut self) -> nb::Result<(), Infallible> {
+        if self.regs.ctl.read().scif().bit() {
+            self.regs.ctl.modify(|_, w| w.scif().clear_bit());
+            Ok(())
+        } else {
+            Err(nb::Error::WouldBlock)
+        }
+    }
+
     /**
       Return `Ok(())` if the alarm flag is set, `Err(nb::WouldBlock)` otherwise.
 
