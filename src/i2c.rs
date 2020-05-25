@@ -166,7 +166,7 @@ impl<PINS> I2c<I2C1, PINS> {
 
 impl<PINS> BlockingI2c<I2C1, PINS> {
     /// Creates a blocking I2C1 object on pins PB10 and PB11
-    pub fn i2c2(
+    pub fn i2c1(
         i2c: I2C1,
         pins: PINS,
         mode: Mode,
