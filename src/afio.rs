@@ -96,6 +96,7 @@ macro_rules! remap {
 }
 
 remap! {
+    I2C0 => (i2c0_remap, bool),
     SPI0 => (spi0_remap, bool),
     SPI2 => (spi2_remap, bool),
     USART0 => (usart0_remap, bool),
