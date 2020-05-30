@@ -44,6 +44,10 @@ pub enum Mode {
         frequency: Hertz,
         duty_cycle: DutyCycle,
     },
+    FastPlus {
+        frequency: Hertz,
+        duty_cycle: DutyCycle,
+    }
 }
 
 impl Mode {
@@ -60,10 +64,18 @@ impl Mode {
         }
     }
 
+    pub fn fast_plus<F: Into<Hertz>>(frequency: F, duty_cycle: DutyCycle) -> Self {
+        Mode::Fast {
+            frequency: frequency.into(),
+            duty_cycle,
+        }
+    }
+
     pub fn get_frequency(&self) -> Hertz {
         match *self {
             Mode::Standard { frequency } => frequency,
             Mode::Fast { frequency, .. } => frequency,
+            Mode::FastPlus { frequency, .. } => frequency,
         }
     }
 }
@@ -273,7 +285,7 @@ macro_rules! hal {
 
                     let pclk1 = $I2CX::base_frequency(rcu).0;
 
-                    assert!(mode.get_frequency().0 <= 400_000);
+                    assert!(mode.get_frequency().0 <= 1_000_000);
 
                     let mut i2c = I2c { i2c, pins, mode, pclk1 };
                     i2c.init();
@@ -300,24 +312,33 @@ macro_rules! hal {
                             });
                         },
                         Mode::Fast { ref duty_cycle, .. } => {
-                            self.i2c.rt.write(|w| unsafe {
-                                w.risetime().bits((pclk1_mhz * 300 / 1000 + 1) as u8)
-                            });
+                            self.configure_fast_mode(pclk1_mhz, freq, duty_cycle)
+                        }
+                        Mode::FastPlus { ref duty_cycle, .. } => {
+                            self.configure_fast_mode(pclk1_mhz, freq, duty_cycle);
 
-                            self.i2c.ckcfg.write(|w| {
-                                let (freq, duty) = match duty_cycle {
-                                    DutyCycle::Ratio2to1 => (((self.pclk1 / (freq.0 * 3)) as u16).max(1), false),
-                                    DutyCycle::Ratio16to9 => (((self.pclk1 / (freq.0 * 25)) as u16).max(1), true)
-                                };
-
-                                unsafe {
-                                    w.clkc().bits(freq).dtcy().bit(duty).fast().set_bit()
-                                }
-                            });
+                            self.i2c.fmpcfg.write(|w| w.fmpen().set_bit())
                         }
                     };
 
                     self.i2c.ctl0.modify(|_, w| w.i2cen().set_bit());
+                }
+
+                fn configure_fast_mode(&self, pclk1_mhz: u16, freq: Hertz, duty_cycle: &DutyCycle) {
+                    self.i2c.rt.write(|w| unsafe {
+                        w.risetime().bits((pclk1_mhz * 300 / 1000 + 1) as u8)
+                    });
+
+                    self.i2c.ckcfg.write(|w| {
+                        let (freq, duty) = match duty_cycle {
+                            DutyCycle::Ratio2to1 => (((self.pclk1 / (freq.0 * 3)) as u16).max(1), false),
+                            DutyCycle::Ratio16to9 => (((self.pclk1 / (freq.0 * 25)) as u16).max(1), true)
+                        };
+
+                        unsafe {
+                            w.clkc().bits(freq).dtcy().bit(duty).fast().set_bit()
+                        }
+                    });
                 }
 
                 /// Perform an I2C software reset
