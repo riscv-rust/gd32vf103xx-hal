@@ -182,70 +182,70 @@ _irq_handler:
 .align 9
 .option pop
 .section .text.vectors, "ax"
-    .weak  INT_SFT
-    .weak  INT_TMR
-    .weak  INT_BWEI
-    .weak  INT_PMOVI
-    .weak  WWDGT
-    .weak  LVD
-    .weak  TAMPER
-    .weak  RTC
-    .weak  FMC
-    .weak  RCU
-    .weak  EXTI0
-    .weak  EXTI1
-    .weak  EXTI2
-    .weak  EXTI3
-    .weak  EXTI4
-    .weak  DMA0_Channel0
-    .weak  DMA0_Channel1
-    .weak  DMA0_Channel2
-    .weak  DMA0_Channel3
-    .weak  DMA0_Channel4
-    .weak  DMA0_Channel5
-    .weak  DMA0_Channel6
-    .weak  ADC0_1
-    .weak  CAN0_TX
-    .weak  CAN0_RX0
-    .weak  CAN0_RX1
-    .weak  CAN0_EWMC
-    .weak  EXTI5_9
-    .weak  TIMER0_BRK
-    .weak  TIMER0_UP
-    .weak  TIMER0_TRG_CMT
-    .weak  TIMER0_Channel
-    .weak  TIMER1
-    .weak  TIMER2
-    .weak  TIMER3
-    .weak  I2C0_EV
-    .weak  I2C0_ER
-    .weak  I2C1_EV
-    .weak  I2C1_ER
-    .weak  SPI0
-    .weak  SPI1
-    .weak  USART0
-    .weak  USART1
-    .weak  USART2
-    .weak  EXTI10_15
-    .weak  RTC_Alarm
-    .weak  USBFS_WKUP
-    .weak  EXMC
-    .weak  TIMER4
-    .weak  SPI2
-    .weak  UART3
-    .weak  UART4
-    .weak  TIMER5
-    .weak  TIMER6
-    .weak  DMA1_Channel0
-    .weak  DMA1_Channel1
-    .weak  DMA1_Channel2
-    .weak  DMA1_Channel3
-    .weak  DMA1_Channel4
-    .weak  CAN1_TX
-    .weak  CAN1_RX0
-    .weak  CAN1_RX1
-    .weak  CAN1_EWMC
-    .weak  USBFS
+    .weak INT_SFT
+    .weak INT_TMR
+    .weak INT_BWEI
+    .weak INT_PMOVI
+    .weak WWDGT
+    .weak EXTI_LVD
+    .weak TAMPER
+    .weak RTC
+    .weak FMC
+    .weak RCU
+    .weak EXTI_LINE0
+    .weak EXTI_LINE1
+    .weak EXTI_LINE2
+    .weak EXTI_LINE3
+    .weak EXTI_LINE4
+    .weak DMA0_CHANNEL0
+    .weak DMA0_CHANNEL1
+    .weak DMA0_CHANNEL2
+    .weak DMA0_CHANNEL3
+    .weak DMA0_CHANNEL4
+    .weak DMA0_CHANNEL5
+    .weak DMA0_CHANNEL6
+    .weak ADC0_1
+    .weak CAN0_TX
+    .weak CAN0_RX0
+    .weak CAN0_RX1
+    .weak CAN0_EWMC
+    .weak EXTI_LINE9_5
+    .weak TIMER0_BRK
+    .weak TIMER0_UP
+    .weak TIMER0_TRG_CMT
+    .weak TIMER0_CHANNEL
+    .weak TIMER1
+    .weak TIMER2
+    .weak TIMER3
+    .weak I2C0_EV
+    .weak I2C0_ER
+    .weak I2C1_EV
+    .weak I2C1_ER
+    .weak SPI0
+    .weak SPI1
+    .weak USART0
+    .weak USART1
+    .weak USART2
+    .weak EXTI_LINE15_10
+    .weak RTC_ALARM
+    .weak USBFS_WKUP
+    .weak EXMC
+    .weak TIMER4
+    .weak SPI2
+    .weak UART3
+    .weak UART4
+    .weak TIMER5
+    .weak TIMER6
+    .weak DMA1_CHANNEL0
+    .weak DMA1_CHANNEL1
+    .weak DMA1_CHANNEL2
+    .weak DMA1_CHANNEL3
+    .weak DMA1_CHANNEL4
+    .weak CAN1_TX
+    .weak CAN1_RX0
+    .weak CAN1_RX1
+    .weak CAN1_EWMC
+    .weak USBFS
 vectors:
     j _start
     .option push
@@ -271,33 +271,33 @@ vectors:
     .word     INT_BWEI
     .word     INT_PMOVI
     .word     WWDGT
-    .word     LVD
+    .word     EXTI_LVD
     .word     TAMPER
     .word     RTC
     .word     FMC
     .word     RCU
-    .word     EXTI0
-    .word     EXTI1
-    .word     EXTI2
-    .word     EXTI3
-    .word     EXTI4
-    .word     DMA0_Channel0
-    .word     DMA0_Channel1
-    .word     DMA0_Channel2
-    .word     DMA0_Channel3
-    .word     DMA0_Channel4
-    .word     DMA0_Channel5
-    .word     DMA0_Channel6
+    .word     EXTI_LINE0
+    .word     EXTI_LINE1
+    .word     EXTI_LINE2
+    .word     EXTI_LINE3
+    .word     EXTI_LINE4
+    .word     DMA0_CHANNEL0
+    .word     DMA0_CHANNEL1
+    .word     DMA0_CHANNEL2
+    .word     DMA0_CHANNEL3
+    .word     DMA0_CHANNEL4
+    .word     DMA0_CHANNEL5
+    .word     DMA0_CHANNEL6
     .word     ADC0_1
     .word     CAN0_TX
     .word     CAN0_RX0
     .word     CAN0_RX1
     .word     CAN0_EWMC
-    .word     EXTI5_9
+    .word     EXTI_LINE9_5
     .word     TIMER0_BRK
     .word     TIMER0_UP
     .word     TIMER0_TRG_CMT
-    .word     TIMER0_Channel
+    .word     TIMER0_CHANNEL
     .word     TIMER1
     .word     TIMER2
     .word     TIMER3
@@ -310,15 +310,15 @@ vectors:
     .word     USART0
     .word     USART1
     .word     USART2
-    .word     EXTI10_15
-    .word     RTC_Alarm
+    .word     EXTI_LINE15_10
+    .word     RTC_ALARM
     .word     USBFS_WKUP
     .word     0
     .word     0
     .word     0
     .word     0
     .word     0
-    .word     EXMC
+    .word     EXMC // not present in Reference Manul but present in vendor HAL
     .word     0
     .word     TIMER4
     .word     SPI2
@@ -326,11 +326,11 @@ vectors:
     .word     UART4
     .word     TIMER5
     .word     TIMER6
-    .word     DMA1_Channel0
-    .word     DMA1_Channel1
-    .word     DMA1_Channel2
-    .word     DMA1_Channel3
-    .word     DMA1_Channel4
+    .word     DMA1_CHANNEL0
+    .word     DMA1_CHANNEL1
+    .word     DMA1_CHANNEL2
+    .word     DMA1_CHANNEL3
+    .word     DMA1_CHANNEL4
     .word     0
     .word     0
     .word     CAN1_TX
