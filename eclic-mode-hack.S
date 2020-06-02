@@ -21,7 +21,7 @@
 #define CSR_MMISC_CTL   0x7d0
 #define CSR_MSUBM       0x7c4
 
-#define MSTATUS_MIE         0x00000008
+#define MSTATUS_MIE     0x00000008
 
 .macro DISABLE_MIE
   csrc CSR_MSTATUS, MSTATUS_MIE
@@ -152,16 +152,19 @@
 _irq_handler:
   SAVE_CONTEXT
 
-  // The special CSR read operation, which is actually use mcause as operand to directly store it to memory
+  // The special CSR read operation, which is actually use mcause as operand to
+  // directly store it to memory
   csrrwi  x0, CSR_PUSHMCAUSE, 17
-  // The special CSR read operation, which is actually use mepc as operand to directly store it to memory
+  // The special CSR read operation, which is actually use mepc as operand to
+  // directly store it to memory
   csrrwi  x0, CSR_PUSHMEPC, 18
-  // The special CSR read operation, which is actually use Msubm as operand to directly store it to memory
+  // The special CSR read operation, which is actually use Msubm as operand to
+  // directly store it to memory
   csrrwi  x0, CSR_PUSHMSUBM, 19
 
-  // The special CSR read/write operation, which is actually Claim the CLIC to find its pending highest
-  // ID, if the ID is not 0, then automatically enable the mstatus.MIE, and jump to its vector-entry-label, and
-  // update the link register
+  // The special CSR read/write operation, which is actually Claim the CLIC to
+  // find its pending highest ID, if the ID is not 0, then automatically enable
+  // the mstatus.MIE, and jump to its vector-entry-label, and update the link register.
   csrrw ra, CSR_JALMNXTI, ra
 
   DISABLE_MIE
@@ -248,10 +251,6 @@ _irq_handler:
     .weak USBFS
 vectors:
     j _start
-    .option push
-    .option norelax
-    .align    2
-    .option pop
     .word     0
     .word     0
     .word     INT_SFT
