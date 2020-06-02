@@ -250,7 +250,7 @@ _irq_handler:
     .weak CAN1_EWMC
     .weak USBFS
 vectors:
-    j _start
+    .word     0
     .word     0
     .word     0
     .word     INT_SFT
