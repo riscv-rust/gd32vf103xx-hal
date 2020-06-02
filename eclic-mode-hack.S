@@ -143,7 +143,7 @@
 .endm
 
 // IRQ entry point
-.section      .text.irq
+.section .text.irq
 .option push
 .option norelax
 .align 2
@@ -180,7 +180,11 @@ service_loop:
 
   mret
 
-.section .init, "ax"
+.option push
+.option norelax
+.align 9
+.option pop
+.section .text.vectors, "ax"
     .weak  eclic_msip_handler
     .weak  eclic_mtip_handler
     .weak  eclic_bwei_handler
@@ -337,29 +341,6 @@ vectors:
     .word     CAN1_RX1
     .word     CAN1_EWMC
     .word     USBFS
-.global _setup_interrupts
-_setup_interrupts:
-    // Set the the NMI base to share with mtvec by setting CSR_MMISC_CTL
-    li t0, 0x200
-    csrs CSR_MMISC_CTL, t0
-
-    // Set the mtvt
-    la t0, vectors
-    csrw CSR_MTVT, t0
-
-    // Set the mtvt2 and enable it
-    la t0, _irq_handler
-    csrw CSR_MTVT2, t0
-    csrs CSR_MTVT2, 0x1
-
-    // Enable ECLIC and set trap handler
-    la t0, _start_trap
-    andi t0, t0, -64
-    ori t0, t0, 3
-    csrw mtvec, t0
-
-    ret
-
 /*
     Trap entry point (_start_trap)
 */
@@ -411,3 +392,26 @@ _start_trap:
 
     addi sp, sp, 16*REGBYTES
     mret
+.section .text
+.global _setup_interrupts
+_setup_interrupts:
+    // Set the the NMI base to share with mtvec by setting CSR_MMISC_CTL
+    li t0, 0x200
+    csrs CSR_MMISC_CTL, t0
+
+    // Set the mtvt
+    la t0, vectors
+    csrw CSR_MTVT, t0
+
+    // Set the mtvt2 and enable it
+    la t0, _irq_handler
+    csrw CSR_MTVT2, t0
+    csrs CSR_MTVT2, 0x1
+
+    // Enable ECLIC and set trap handler
+    la t0, _start_trap
+    andi t0, t0, -64
+    ori t0, t0, 3
+    csrw mtvec, t0
+
+    ret
