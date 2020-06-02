@@ -159,13 +159,10 @@ _irq_handler:
   // The special CSR read operation, which is actually use Msubm as operand to directly store it to memory
   csrrwi  x0, CSR_PUSHMSUBM, 19
 
-service_loop:
   // The special CSR read/write operation, which is actually Claim the CLIC to find its pending highest
   // ID, if the ID is not 0, then automatically enable the mstatus.MIE, and jump to its vector-entry-label, and
   // update the link register
   csrrw ra, CSR_JALMNXTI, ra
-
-  //RESTORE_CONTEXT_EXCPT_X5
 
   DISABLE_MIE
 
