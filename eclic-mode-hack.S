@@ -49,7 +49,7 @@
 	STORE x14, 9*REGBYTES(sp)
 	STORE x15, 10*REGBYTES(sp)
 #ifndef __riscv_32e
-    STORE x16, 11*REGBYTES(sp)
+  STORE x16, 11*REGBYTES(sp)
 	STORE x17, 12*REGBYTES(sp)
 	STORE x28, 13*REGBYTES(sp)
 	STORE x29, 14*REGBYTES(sp)
@@ -84,7 +84,7 @@
 .endm
 
 .macro RESTORE_CONTEXT
-    LOAD x1, 0*REGBYTES(sp)
+  LOAD x1, 0*REGBYTES(sp)
 	LOAD x4, 1*REGBYTES(sp)
 	LOAD x5, 2*REGBYTES(sp)
 	LOAD x6, 3*REGBYTES(sp)
@@ -142,41 +142,32 @@
 #endif
 .endm
 
-/*
-    Entry point of all programs (_start).
-
-    It initializes DWARF call frame information, the stack pointer, the
-    frame pointer (needed for closures to work in start_rust) and the global
-    pointer. Then it calls _start_rust.
-*/
-
 // IRQ entry point
 .section      .text.irq
+.option push
+.option norelax
 .align 2
-.global irq_entry
-.weak irq_entry
-irq_entry:
-  // Allocate the stack space
+.option pop
+.global _irq_handler
+_irq_handler:
+  SAVE_CONTEXT
 
-  SAVE_CONTEXT// Save 16 regs
-
-  //------This special CSR read operation, which is actually use mcause as operand to directly store it to memory
+  // The special CSR read operation, which is actually use mcause as operand to directly store it to memory
   csrrwi  x0, CSR_PUSHMCAUSE, 17
-  //------This special CSR read operation, which is actually use mepc as operand to directly store it to memory
+  // The special CSR read operation, which is actually use mepc as operand to directly store it to memory
   csrrwi  x0, CSR_PUSHMEPC, 18
-  //------This special CSR read operation, which is actually use Msubm as operand to directly store it to memory
+  // The special CSR read operation, which is actually use Msubm as operand to directly store it to memory
   csrrwi  x0, CSR_PUSHMSUBM, 19
 
 service_loop:
-  //------This special CSR read/write operation, which is actually Claim the CLIC to find its pending highest
+  // The special CSR read/write operation, which is actually Claim the CLIC to find its pending highest
   // ID, if the ID is not 0, then automatically enable the mstatus.MIE, and jump to its vector-entry-label, and
   // update the link register
   csrrw ra, CSR_JALMNXTI, ra
 
   //RESTORE_CONTEXT_EXCPT_X5
 
-  #---- Critical section with interrupts disabled -----------------------
-  DISABLE_MIE # Disable interrupts
+  DISABLE_MIE
 
   LOAD x5,  19*REGBYTES(sp)
   csrw CSR_MSUBM, x5
@@ -254,9 +245,12 @@ service_loop:
     .weak  CAN1_RX1
     .weak  CAN1_EWMC
     .weak  USBFS
-vector_base:
+vectors:
     j _start
+    .option push
+    .option norelax
     .align    2
+    .option pop
     .word     0
     .word     0
     .word     eclic_msip_handler
@@ -343,108 +337,18 @@ vector_base:
     .word     CAN1_RX1
     .word     CAN1_EWMC
     .word     USBFS
-.global _start
-_start:
-    /* Jump to the absolute address defined by the linker script. */
-    // for 32bit
-    .if __riscv_xlen == 32
-    lui ra, %hi(_abs_start)
-    jr %lo(_abs_start)(ra)
-    .endif
-
-    // for 64bit
-    .if __riscv_xlen == 64
-1:
-    auipc ra, %pcrel_hi(1f)
-    ld ra, %pcrel_lo(1b)(ra)
-    jr ra
-    .align  3
-1:
-    .dword _abs_start
-    .endif
-
-.global _abs_start
-_abs_start:
-    .cfi_startproc
-    .cfi_undefined ra
-
-    csrw mie, 0
-    csrw mip, 0
-
-    li  x1, 0
-    li  x2, 0
-    li  x3, 0
-    li  x4, 0
-    li  x5, 0
-    li  x6, 0
-    li  x7, 0
-    li  x8, 0
-    li  x9, 0
-    li  x10,0
-    li  x11,0
-    li  x12,0
-    li  x13,0
-    li  x14,0
-    li  x15,0
-    li  x16,0
-    li  x17,0
-    li  x18,0
-    li  x19,0
-    li  x20,0
-    li  x21,0
-    li  x22,0
-    li  x23,0
-    li  x24,0
-    li  x25,0
-    li  x26,0
-    li  x27,0
-    li  x28,0
-    li  x29,0
-    li  x30,0
-    li  x31,0
-
-    .option push
-    .option norelax
-    la gp, __global_pointer$
-    .option pop
-
-    // Check hart id
-    csrr a2, mhartid
-    lui t0, %hi(_max_hart_id)
-    add t0, t0, %lo(_max_hart_id)
-    bgtu a2, t0, abort
-
-    // Allocate stacks
-    la sp, _stack_start
-    lui t0, %hi(_hart_stack_size)
-    add t0, t0, %lo(_hart_stack_size)
-#ifdef __riscv_mul
-    mul t0, a2, t0
-#else
-    beqz a2, 2f  // Jump if single-hart
-    mv t1, a2
-    mv t2, t0
-1:
-    add t0, t0, t2
-    addi t1, t1, -1
-    bnez t1, 1b
-2:
-#endif
-    sub sp, sp, t0
-
-    // Set frame pointer
-    add s0, sp, zero
-
+.global _setup_interrupts
+_setup_interrupts:
     // Set the the NMI base to share with mtvec by setting CSR_MMISC_CTL
     li t0, 0x200
     csrs CSR_MMISC_CTL, t0
 
-	// Set the mtvt
-    la t0, vector_base
+    // Set the mtvt
+    la t0, vectors
     csrw CSR_MTVT, t0
 
-	// Set the mtvt2 and enable it
-    la t0, irq_entry
+    // Set the mtvt2 and enable it
+    la t0, _irq_handler
     csrw CSR_MTVT2, t0
     csrs CSR_MTVT2, 0x1
 
@@ -454,21 +358,17 @@ _abs_start:
     ori t0, t0, 3
     csrw mtvec, t0
 
-    jal zero, _start_rust
-
-    .cfi_endproc
-
+    ret
 
 /*
     Trap entry point (_start_trap)
-
-    Saves caller saved registers ra, t0..6, a0..7, calls _start_trap_rust,
-    restores caller saved registers and then returns.
 */
 .section .trap, "ax"
+.option push
+.option norelax
 .align 6
+.option pop
 .global _start_trap
-
 _start_trap:
     addi sp, sp, -16*REGBYTES
 
