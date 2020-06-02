@@ -229,10 +229,6 @@ impl EclicExt for ECLIC {
 
     #[inline]
     fn set_level<I: Nr>(interrupt: I, level: u8) {
-        let level_bits = Self::get_level_bits();
-
-        assert!(level <= (1 << level_bits) - 1);
-
         let nr = usize::from(interrupt.nr());
 
         let mut intctl = unsafe {
@@ -242,10 +238,12 @@ impl EclicExt for ECLIC {
                 .level_priority()
                 .bits()
         };
+        let level_bits = Self::get_level_bits();
 
         intctl <<= level_bits;
         intctl >>= level_bits;
 
+        let level = core::cmp::min(level, (1 << level_bits) - 1);
         let level = level << (8 - level_bits);
 
         unsafe {
@@ -272,10 +270,6 @@ impl EclicExt for ECLIC {
 
     #[inline]
     fn set_priority<I: Nr>(interrupt: I, priority: u8) {
-        let level_bits = Self::get_level_bits();
-
-        assert!(priority <= (1 << (EFFECTIVE_LEVEL_PRIORITY_BITS - level_bits)) - 1);
-
         let nr = usize::from(interrupt.nr());
 
         let mut intctl = unsafe {
@@ -285,10 +279,12 @@ impl EclicExt for ECLIC {
                 .level_priority()
                 .bits()
         };
+        let level_bits = Self::get_level_bits();
 
         intctl >>= 8 - level_bits;
         intctl <<= 8 - level_bits;
 
+        let priority = core::cmp::min(priority, (1 << (EFFECTIVE_LEVEL_PRIORITY_BITS - level_bits)) - 1);
         let priority = priority << (8 - EFFECTIVE_LEVEL_PRIORITY_BITS);
 
         unsafe {
