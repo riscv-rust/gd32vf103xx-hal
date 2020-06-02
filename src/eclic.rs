@@ -25,8 +25,11 @@ pub trait EclicExt {
     /// Reset all ECLIC registers to 0
     fn reset();
 
-    /// Set interrupt threshold level
+    /// Set interrupts threshold level
     fn set_threshold_level(level: u8);
+
+    /// Get interrupts threshold level
+    fn get_threshold_level() -> u8;
 
     fn set_level_priority_bits(lp: LevelPriorityBits);
 
@@ -97,6 +100,11 @@ impl EclicExt for ECLIC {
     #[inline]
     fn set_threshold_level(level: u8) {
         unsafe { (*Self::ptr()).mth.write(|w| w.mth().bits(level)) }
+    }
+
+    #[inline]
+    fn get_threshold_level() -> u8 {
+        unsafe { (*Self::ptr()).mth.read().mth().bits() }
     }
 
     #[inline]
