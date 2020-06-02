@@ -12,6 +12,7 @@ use embedded_hal as hal;
 pub mod afio;
 pub mod backup_domain;
 pub mod delay;
+pub mod eclic;
 pub mod exmc;
 pub mod gpio;
 pub mod i2c;
