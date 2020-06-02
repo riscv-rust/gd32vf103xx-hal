@@ -22,7 +22,8 @@ pub enum TriggerType {
 }
 
 pub trait EclicExt {
-    fn setup();
+    /// Reset all ECLIC registers to 0
+    fn reset();
 
     /// Set interrupt threshold level
     fn set_threshold_level(level: u8);
@@ -75,7 +76,7 @@ pub trait EclicExt {
 }
 
 impl EclicExt for ECLIC {
-    fn setup() {
+    fn reset() {
         let eclic = unsafe { &*Self::ptr() };
 
         eclic.cliccfg.write(|w| unsafe { w.bits(0) });
