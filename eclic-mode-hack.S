@@ -182,10 +182,10 @@ _irq_handler:
 .align 9
 .option pop
 .section .text.vectors, "ax"
-    .weak  eclic_msip_handler
-    .weak  eclic_mtip_handler
-    .weak  eclic_bwei_handler
-    .weak  eclic_pmovi_handler
+    .weak  INT_SFT
+    .weak  INT_TMR
+    .weak  INT_BWEI
+    .weak  INT_PMOVI
     .weak  WWDGT
     .weak  LVD
     .weak  TAMPER
@@ -254,23 +254,23 @@ vectors:
     .option pop
     .word     0
     .word     0
-    .word     eclic_msip_handler
+    .word     INT_SFT
     .word     0
     .word     0
-    .word  	  0
-    .word  	  eclic_mtip_handler
-    .word  	  0
-    .word  	  0
-    .word  	  0
-    .word  	  0
-    .word  	  0
-    .word  	  0
-    .word  	  0
-    .word 	  0
-    .word  	  0
-    .word  	  eclic_bwei_handler
-    .word  	  eclic_pmovi_handler
-    .word  	  WWDGT
+    .word     0
+    .word     INT_TMR
+    .word     0
+    .word     0
+    .word     0
+    .word     0
+    .word     0
+    .word     0
+    .word     0
+    .word     0
+    .word     0
+    .word     INT_BWEI
+    .word     INT_PMOVI
+    .word     WWDGT
     .word     LVD
     .word     TAMPER
     .word     RTC
