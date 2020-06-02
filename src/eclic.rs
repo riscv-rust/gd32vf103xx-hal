@@ -1,7 +1,7 @@
 use crate::pac::ECLIC;
 use riscv::interrupt::Nr;
 
-const EFFECTIVE_BITS: u8 = 4;
+const EFFECTIVE_LEVEL_PRIORITY_BITS: u8 = 4;
 
 #[repr(u8)]
 #[derive(Debug)]
@@ -128,12 +128,12 @@ impl EclicExt for ECLIC {
     fn get_level_bits() -> u8 {
         let bits = unsafe { (*Self::ptr()).cliccfg.read().nlbits().bits() };
 
-        core::cmp::min(bits, EFFECTIVE_BITS)
+        core::cmp::min(bits, EFFECTIVE_LEVEL_PRIORITY_BITS)
     }
 
     #[inline]
     fn get_priority_bits() -> u8 {
-        EFFECTIVE_BITS - Self::get_level_bits()
+        EFFECTIVE_LEVEL_PRIORITY_BITS - Self::get_level_bits()
     }
 
     #[inline]
@@ -229,6 +229,10 @@ impl EclicExt for ECLIC {
 
     #[inline]
     fn set_level<I: Nr>(interrupt: I, level: u8) {
+        let level_bits = Self::get_level_bits();
+
+        assert!(level <= (1 << level) - 1);
+
         let nr = usize::from(interrupt.nr());
 
         let mut intctl = unsafe {
@@ -238,7 +242,6 @@ impl EclicExt for ECLIC {
                 .level_priority()
                 .bits()
         };
-        let level_bits = Self::get_level_bits();
 
         intctl <<= level_bits;
         intctl >>= level_bits;
@@ -269,6 +272,10 @@ impl EclicExt for ECLIC {
 
     #[inline]
     fn set_priority<I: Nr>(interrupt: I, priority: u8) {
+        let level_bits = Self::get_level_bits();
+
+        assert!(priority <= (1 << (EFFECTIVE_LEVEL_PRIORITY_BITS - level_bits)) - 1);
+
         let nr = usize::from(interrupt.nr());
 
         let mut intctl = unsafe {
@@ -279,12 +286,10 @@ impl EclicExt for ECLIC {
                 .bits()
         };
 
-        let level_bits = Self::get_level_bits();
-
         intctl >>= 8 - level_bits;
         intctl <<= 8 - level_bits;
 
-        let priority = priority << (8 - EFFECTIVE_BITS);
+        let priority = priority << (8 - EFFECTIVE_LEVEL_PRIORITY_BITS);
 
         unsafe {
             (*Self::ptr()).clicints[nr]
@@ -307,6 +312,6 @@ impl EclicExt for ECLIC {
 
         let level_bits = Self::get_level_bits();
 
-        (intctl << level_bits) >> (level_bits + (8 - EFFECTIVE_BITS))
+        (intctl << level_bits) >> (level_bits + (8 - EFFECTIVE_LEVEL_PRIORITY_BITS))
     }
 }
