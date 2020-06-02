@@ -41,7 +41,7 @@ pub trait EclicExt {
     /// Get number of bits designated for interrupt priority
     fn get_priority_bits() -> u8;
 
-    /// Enable `interrupt`
+    /// Enables `interrupt`
     unsafe fn unmask<I: Nr>(interrupt: I);
 
     /// Disables `interrupt`
@@ -265,7 +265,7 @@ impl EclicExt for ECLIC {
                 .bits()
         };
 
-        intctl >> (8 - Self::get_level_bits())
+        (u16::from(intctl) >> (8 - Self::get_level_bits())) as u8
     }
 
     #[inline]
@@ -284,7 +284,10 @@ impl EclicExt for ECLIC {
         intctl >>= 8 - level_bits;
         intctl <<= 8 - level_bits;
 
-        let priority = core::cmp::min(priority, (1 << (EFFECTIVE_LEVEL_PRIORITY_BITS - level_bits)) - 1);
+        let priority = core::cmp::min(
+            priority,
+            (1 << (EFFECTIVE_LEVEL_PRIORITY_BITS - level_bits)) - 1,
+        );
         let priority = priority << (8 - EFFECTIVE_LEVEL_PRIORITY_BITS);
 
         unsafe {
@@ -308,6 +311,7 @@ impl EclicExt for ECLIC {
 
         let level_bits = Self::get_level_bits();
 
-        (intctl << level_bits) >> (level_bits + (8 - EFFECTIVE_LEVEL_PRIORITY_BITS))
+        (u16::from(intctl << level_bits) >> (level_bits + (8 - EFFECTIVE_LEVEL_PRIORITY_BITS)))
+            as u8
     }
 }
