@@ -33,15 +33,8 @@
 .endm
 
 .macro SAVE_CONTEXT
-#ifdef __riscv_flen
-  #if (__riscv_flen==64 )
-    addi sp, sp, -20*REGBYTES - 20*FPREGBYTES
-  #else
-    addi sp, sp, -20*REGBYTES
-  #endif
-#else
   addi sp, sp, -20*REGBYTES
-#endif
+
   STORE x1, 0*REGBYTES(sp)
 	STORE x4, 1*REGBYTES(sp)
 	STORE x5, 2*REGBYTES(sp)
@@ -60,31 +53,6 @@
 	STORE x29, 14*REGBYTES(sp)
 	STORE x30, 15*REGBYTES(sp)
 	STORE x31, 16*REGBYTES(sp)
-#endif
-
-#ifdef __riscv_flen
-  #if (__riscv_flen == 64)
-  FPSTORE f0, (20*REGBYTES + 0*FPREGBYTES)(sp)
-	FPSTORE f1, (20*REGBYTES + 1*FPREGBYTES)(sp)
-	FPSTORE f2, (20*REGBYTES + 2*FPREGBYTES)(sp)
-	FPSTORE f3, (20*REGBYTES + 3*FPREGBYTES)(sp)
-	FPSTORE f4, (20*REGBYTES + 4*FPREGBYTES)(sp)
-	FPSTORE f5, (20*REGBYTES + 5*FPREGBYTES)(sp)
-	FPSTORE f6, (20*REGBYTES + 6*FPREGBYTES)(sp)
-	FPSTORE f7, (20*REGBYTES + 7*FPREGBYTES)(sp)
-	FPSTORE f10, (20*REGBYTES + 8*FPREGBYTES)(sp)
-	FPSTORE f11, (20*REGBYTES + 9*FPREGBYTES)(sp)
-	FPSTORE f12, (20*REGBYTES + 10*FPREGBYTES)(sp)
-	FPSTORE f13, (20*REGBYTES + 11*FPREGBYTES)(sp)
-	FPSTORE f14, (20*REGBYTES + 12*FPREGBYTES)(sp)
-	FPSTORE f15, (20*REGBYTES + 13*FPREGBYTES)(sp)
-	FPSTORE f16, (20*REGBYTES + 14*FPREGBYTES)(sp)
-	FPSTORE f17, (20*REGBYTES + 15*FPREGBYTES)(sp)
-	FPSTORE f28, (20*REGBYTES + 16*FPREGBYTES)(sp)
-	FPSTORE f29, (20*REGBYTES + 17*FPREGBYTES)(sp)
-	FPSTORE f30, (20*REGBYTES + 18*FPREGBYTES)(sp)
-	FPSTORE f31, (20*REGBYTES + 19*FPREGBYTES)(sp)
-  #endif
 #endif
 .endm
 
@@ -108,43 +76,8 @@
 	LOAD x30, 15*REGBYTES(sp)
 	LOAD x31, 16*REGBYTES(sp)
 #endif
-
-#ifdef __riscv_flen
-  #if (__riscv_flen==64)
-/* Restore fp caller registers */
-	FPLOAD f0, (20*REGBYTES + 0*FPREGBYTES)(sp)
-	FPLOAD f1, (20*REGBYTES + 1*FPREGBYTES)(sp)
-	FPLOAD f2, (20*REGBYTES + 2*FPREGBYTES)(sp)
-	FPLOAD f3, (20*REGBYTES + 3*FPREGBYTES)(sp)
-	FPLOAD f4, (20*REGBYTES + 4*FPREGBYTES)(sp)
-	FPLOAD f5, (20*REGBYTES + 5*FPREGBYTES)(sp)
-	FPLOAD f6, (20*REGBYTES + 6*FPREGBYTES)(sp)
-	FPLOAD f7, (20*REGBYTES + 7*FPREGBYTES)(sp)
-	FPLOAD f10, (20*REGBYTES + 8*FPREGBYTES)(sp)
-	FPLOAD f11, (20*REGBYTES + 9*FPREGBYTES)(sp)
-	FPLOAD f12, (20*REGBYTES + 10*FPREGBYTES)(sp)
-	FPLOAD f13, (20*REGBYTES + 11*FPREGBYTES)(sp)
-	FPLOAD f14, (20*REGBYTES + 12*FPREGBYTES)(sp)
-	FPLOAD f15, (20*REGBYTES + 13*FPREGBYTES)(sp)
-	FPLOAD f16, (20*REGBYTES + 14*FPREGBYTES)(sp)
-	FPLOAD f17, (20*REGBYTES + 15*FPREGBYTES)(sp)
-	FPLOAD f28, (20*REGBYTES + 16*FPREGBYTES)(sp)
-	FPLOAD f29, (20*REGBYTES + 17*FPREGBYTES)(sp)
-	FPLOAD f30, (20*REGBYTES + 18*FPREGBYTES)(sp)
-	FPLOAD f31, (20*REGBYTES + 19*FPREGBYTES)(sp)
-  #endif
-#endif
-
-#ifdef __riscv_flen
-  #if(__riscv_flen == 64 )
-    addi sp, sp, 20*REGBYTES  + 20*FPREGBYTES
-  #else
-    addi sp, sp, 20*REGBYTES
-  #endif
-#else
-// De-allocate the stack space
- addi sp, sp, 20*REGBYTES
-#endif
+  // De-allocate the stack space
+  addi sp, sp, 20*REGBYTES
 .endm
 
 // IRQ entry point
