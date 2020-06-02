@@ -231,7 +231,7 @@ impl EclicExt for ECLIC {
     fn set_level<I: Nr>(interrupt: I, level: u8) {
         let level_bits = Self::get_level_bits();
 
-        assert!(level <= (1 << level) - 1);
+        assert!(level <= (1 << level_bits) - 1);
 
         let nr = usize::from(interrupt.nr());
 
