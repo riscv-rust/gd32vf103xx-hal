@@ -3,15 +3,9 @@
   Most code come from Firmware\RISCV\env_Eclipse\start.S
 */
 
-#if __riscv_xlen == 64
-# define STORE    sd
-# define LOAD     ld
-# define LOG_REGBYTES 3
-#else
-# define STORE    sw
-# define LOAD     lw
-# define LOG_REGBYTES 2
-#endif
+#define STORE    sw
+#define LOAD     lw
+#define LOG_REGBYTES 2
 #define REGBYTES (1 << LOG_REGBYTES)
 
 #define CSR_MSTATUS     0x300
@@ -46,14 +40,12 @@
   STORE x13, 8*REGBYTES(sp)
   STORE x14, 9*REGBYTES(sp)
   STORE x15, 10*REGBYTES(sp)
-#ifndef __riscv_32e
   STORE x16, 11*REGBYTES(sp)
   STORE x17, 12*REGBYTES(sp)
   STORE x28, 13*REGBYTES(sp)
   STORE x29, 14*REGBYTES(sp)
   STORE x30, 15*REGBYTES(sp)
   STORE x31, 16*REGBYTES(sp)
-#endif
 .endm
 
 .macro RESTORE_CONTEXT
@@ -68,14 +60,12 @@
   LOAD x13, 8*REGBYTES(sp)
   LOAD x14, 9*REGBYTES(sp)
   LOAD x15, 10*REGBYTES(sp)
-#ifndef __riscv_32e
   LOAD x16, 11*REGBYTES(sp)
   LOAD x17, 12*REGBYTES(sp)
   LOAD x28, 13*REGBYTES(sp)
   LOAD x29, 14*REGBYTES(sp)
   LOAD x30, 15*REGBYTES(sp)
   LOAD x31, 16*REGBYTES(sp)
-#endif
   // De-allocate the stack space
   addi sp, sp, 20*REGBYTES
 .endm
