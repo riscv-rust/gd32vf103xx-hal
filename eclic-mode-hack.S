@@ -318,7 +318,7 @@ vectors:
     .word     0
     .word     0
     .word     0
-    .word     EXMC // not present in Reference Manul but present in vendor HAL
+    .word     EXMC // not present in Reference Manual but present in vendor HAL
     .word     0
     .word     TIMER4
     .word     SPI2
