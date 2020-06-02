@@ -29,6 +29,14 @@ pub trait EclicExt {
 
     fn set_level_priority_bits(lp: LevelPriorityBits);
 
+    fn get_level_priority_bits() -> Option<LevelPriorityBits>;
+
+    /// Get number of bits designated for interrupt level
+    fn get_level_bits() -> u8;
+
+    /// Get number of bits designated for interrupt priority
+    fn get_priority_bits() -> u8;
+
     /// Enable `interrupt`
     unsafe fn unmask<I: Nr>(interrupt: I);
 
@@ -51,11 +59,22 @@ pub trait EclicExt {
     fn set_trigger_type<I: Nr>(interrupt: I, tt: TriggerType);
 
     /// Get `interrupt` trigger type
-    fn get_trigger_type<I: Nr>(interrupt: I) -> TriggerType;
+    fn get_trigger_type<I: Nr>(interrupt: I) -> Option<TriggerType>;
+
+    // Set `interrupt` level
+    fn set_level<I: Nr>(interrupt: I, level: u8);
+
+    // Get `interrupt` level
+    fn get_level<I: Nr>(interrupt: I) -> u8;
+
+    // Set `interrupt` priority
+    fn set_priority<I: Nr>(interrupt: I, priority: u8);
+
+    // Get `interrupt` interrupt
+    fn get_priority<I: Nr>(interrupt: I) -> u8;
 }
 
 impl EclicExt for ECLIC {
-    #[inline]
     fn setup() {
         let eclic = unsafe { &*Self::ptr() };
 
@@ -82,6 +101,30 @@ impl EclicExt for ECLIC {
     #[inline]
     fn set_level_priority_bits(lp: LevelPriorityBits) {
         unsafe { (*Self::ptr()).cliccfg.write(|w| w.nlbits().bits(lp as u8)) }
+    }
+
+    #[inline]
+    fn get_level_priority_bits() -> Option<LevelPriorityBits> {
+        match unsafe { (*Self::ptr()).cliccfg.read().nlbits().bits() } {
+            0 => Some(LevelPriorityBits::Level0Priority4),
+            1 => Some(LevelPriorityBits::Level1Priority3),
+            2 => Some(LevelPriorityBits::Level2Priority2),
+            3 => Some(LevelPriorityBits::Level3Priority1),
+            4 => Some(LevelPriorityBits::Level4Priority0),
+            _ => None,
+        }
+    }
+
+    #[inline]
+    fn get_level_bits() -> u8 {
+        let bits = unsafe { (*Self::ptr()).cliccfg.read().nlbits().bits() };
+
+        core::cmp::min(bits, EFFECTIVE_BITS)
+    }
+
+    #[inline]
+    fn get_priority_bits() -> u8 {
+        EFFECTIVE_BITS - Self::get_level_bits()
     }
 
     #[inline]
@@ -164,14 +207,97 @@ impl EclicExt for ECLIC {
     }
 
     #[inline]
-    fn get_trigger_type<I: Nr>(interrupt: I) -> TriggerType {
+    fn get_trigger_type<I: Nr>(interrupt: I) -> Option<TriggerType> {
         let nr = usize::from(interrupt.nr());
 
         match unsafe { (*Self::ptr()).clicints[nr].clicintattr.read().trig().bits() } {
-            0 => TriggerType::Level,
-            1 => TriggerType::RisingEdge,
-            3 => TriggerType::FallingEdge,
-            _ => panic!("invalid trigger type"),
+            0 => Some(TriggerType::Level),
+            1 => Some(TriggerType::RisingEdge),
+            3 => Some(TriggerType::FallingEdge),
+            _ => None,
         }
+    }
+
+    #[inline]
+    fn set_level<I: Nr>(interrupt: I, level: u8) {
+        let nr = usize::from(interrupt.nr());
+
+        let mut intctl = unsafe {
+            (*Self::ptr()).clicints[nr]
+                .clicintctl
+                .read()
+                .level_priority()
+                .bits()
+        };
+        let level_bits = Self::get_level_bits();
+
+        intctl <<= level_bits;
+        intctl >>= level_bits;
+
+        let level = level << (8 - level_bits);
+
+        unsafe {
+            (*Self::ptr()).clicints[nr]
+                .clicintctl
+                .write(|w| w.level_priority().bits(intctl | level))
+        }
+    }
+
+    #[inline]
+    fn get_level<I: Nr>(interrupt: I) -> u8 {
+        let nr = usize::from(interrupt.nr());
+
+        let intctl = unsafe {
+            (*Self::ptr()).clicints[nr]
+                .clicintctl
+                .read()
+                .level_priority()
+                .bits()
+        };
+
+        intctl >> (8 - Self::get_level_bits())
+    }
+
+    #[inline]
+    fn set_priority<I: Nr>(interrupt: I, priority: u8) {
+        let nr = usize::from(interrupt.nr());
+
+        let mut intctl = unsafe {
+            (*Self::ptr()).clicints[nr]
+                .clicintctl
+                .read()
+                .level_priority()
+                .bits()
+        };
+
+        let level_bits = Self::get_level_bits();
+
+        intctl >>= 8 - level_bits;
+        intctl <<= 8 - level_bits;
+
+        let priority = priority << (8 - EFFECTIVE_BITS);
+
+        unsafe {
+            (*Self::ptr()).clicints[nr]
+                .clicintctl
+                .write(|w| w.level_priority().bits(intctl | priority))
+        }
+    }
+
+    #[inline]
+    fn get_priority<I: Nr>(interrupt: I) -> u8 {
+        let nr = usize::from(interrupt.nr());
+
+        let intctl = unsafe {
+            (*Self::ptr()).clicints[nr]
+                .clicintctl
+                .read()
+                .level_priority()
+                .bits()
+        };
+
+        let level_bits = Self::get_level_bits();
+
+        (intctl << level_bits) >> (level_bits + (8 - EFFECTIVE_BITS))
     }
 }
