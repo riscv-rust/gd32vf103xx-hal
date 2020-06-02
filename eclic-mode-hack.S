@@ -118,11 +118,11 @@ _irq_handler:
 
   mret
 
+.section .text.vectors, "ax"
 .option push
 .option norelax
 .align 9
 .option pop
-.section .text.vectors, "ax"
 
 vectors:
     .word     0
