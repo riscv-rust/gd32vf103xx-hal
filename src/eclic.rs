@@ -83,6 +83,9 @@ pub trait EclicExt {
     /// Get number of bits designated for interrupt priority
     fn get_priority_bits() -> u8;
 
+    /// Setup `interrupt`
+    fn setup<I: Nr + Copy>(interrupt: I, tt: TriggerType, level: Level, priority: Priority);
+
     /// Enables `interrupt`
     unsafe fn unmask<I: Nr>(interrupt: I);
 
@@ -176,6 +179,14 @@ impl EclicExt for ECLIC {
     #[inline]
     fn get_priority_bits() -> u8 {
         EFFECTIVE_LEVEL_PRIORITY_BITS - Self::get_level_bits()
+    }
+
+    fn setup<I: Nr + Copy>(interrupt: I, tt: TriggerType, level: Level, priority: Priority) {
+        Self::mask(interrupt);
+        Self::set_trigger_type(interrupt, tt);
+        Self::set_level(interrupt, level);
+        Self::set_priority(interrupt, priority);
+        Self::unpend(interrupt);
     }
 
     #[inline]
