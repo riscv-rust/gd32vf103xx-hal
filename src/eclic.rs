@@ -21,6 +21,48 @@ pub enum TriggerType {
     FallingEdge = 3,
 }
 
+#[repr(u8)]
+#[derive(Debug)]
+pub enum Level {
+    L0 = 0,
+    L1 = 1,
+    L2 = 2,
+    L3 = 3,
+    L4 = 4,
+    L5 = 5,
+    L6 = 6,
+    L7 = 7,
+    L8 = 8,
+    L9 = 9,
+    L10 = 10,
+    L11 = 11,
+    L12 = 12,
+    L13 = 13,
+    L14 = 14,
+    L15 = 15,
+}
+
+#[repr(u8)]
+#[derive(Debug)]
+pub enum Priority {
+    P0 = 0,
+    P1 = 1,
+    P2 = 2,
+    P3 = 3,
+    P4 = 4,
+    P5 = 5,
+    P6 = 6,
+    P7 = 7,
+    P8 = 8,
+    P9 = 9,
+    P10 = 10,
+    P11 = 11,
+    P12 = 12,
+    P13 = 13,
+    P14 = 14,
+    P15 = 15,
+}
+
 pub trait EclicExt {
     /// Reset all ECLIC registers to 0
     fn reset();
@@ -66,16 +108,16 @@ pub trait EclicExt {
     fn get_trigger_type<I: Nr>(interrupt: I) -> Option<TriggerType>;
 
     // Set `interrupt` level
-    fn set_level<I: Nr>(interrupt: I, level: u8);
+    fn set_level<I: Nr>(interrupt: I, level: Level);
 
     // Get `interrupt` level
-    fn get_level<I: Nr>(interrupt: I) -> u8;
+    fn get_level<I: Nr>(interrupt: I) -> Level;
 
     // Set `interrupt` priority
-    fn set_priority<I: Nr>(interrupt: I, priority: u8);
+    fn set_priority<I: Nr>(interrupt: I, priority: Priority);
 
     // Get `interrupt` interrupt
-    fn get_priority<I: Nr>(interrupt: I) -> u8;
+    fn get_priority<I: Nr>(interrupt: I) -> Priority;
 }
 
 impl EclicExt for ECLIC {
@@ -228,7 +270,7 @@ impl EclicExt for ECLIC {
     }
 
     #[inline]
-    fn set_level<I: Nr>(interrupt: I, level: u8) {
+    fn set_level<I: Nr>(interrupt: I, level: Level) {
         let nr = usize::from(interrupt.nr());
 
         let mut intctl = unsafe {
@@ -243,7 +285,7 @@ impl EclicExt for ECLIC {
         intctl <<= level_bits;
         intctl >>= level_bits;
 
-        let level = core::cmp::min(level, (1 << level_bits) - 1);
+        let level = core::cmp::min(level as u8, (1 << level_bits) - 1);
         let level = level << (8 - level_bits);
 
         unsafe {
@@ -254,7 +296,7 @@ impl EclicExt for ECLIC {
     }
 
     #[inline]
-    fn get_level<I: Nr>(interrupt: I) -> u8 {
+    fn get_level<I: Nr>(interrupt: I) -> Level {
         let nr = usize::from(interrupt.nr());
 
         let intctl = unsafe {
@@ -265,11 +307,14 @@ impl EclicExt for ECLIC {
                 .bits()
         };
 
-        (u16::from(intctl) >> (8 - Self::get_level_bits())) as u8
+        let level = (u16::from(intctl) >> (8 - Self::get_level_bits())) as u8;
+
+        // Enum contains all values from 0-15
+        unsafe { core::mem::transmute(level & 0xF) }
     }
 
     #[inline]
-    fn set_priority<I: Nr>(interrupt: I, priority: u8) {
+    fn set_priority<I: Nr>(interrupt: I, priority: Priority) {
         let nr = usize::from(interrupt.nr());
 
         let mut intctl = unsafe {
@@ -285,7 +330,7 @@ impl EclicExt for ECLIC {
         intctl <<= 8 - level_bits;
 
         let priority = core::cmp::min(
-            priority,
+            priority as u8,
             (1 << (EFFECTIVE_LEVEL_PRIORITY_BITS - level_bits)) - 1,
         );
         let priority = priority << (8 - EFFECTIVE_LEVEL_PRIORITY_BITS);
@@ -298,7 +343,7 @@ impl EclicExt for ECLIC {
     }
 
     #[inline]
-    fn get_priority<I: Nr>(interrupt: I) -> u8 {
+    fn get_priority<I: Nr>(interrupt: I) -> Priority {
         let nr = usize::from(interrupt.nr());
 
         let intctl = unsafe {
@@ -310,8 +355,10 @@ impl EclicExt for ECLIC {
         };
 
         let level_bits = Self::get_level_bits();
+        let priority = (u16::from(intctl << level_bits)
+            >> (level_bits + (8 - EFFECTIVE_LEVEL_PRIORITY_BITS))) as u8;
 
-        (u16::from(intctl << level_bits) >> (level_bits + (8 - EFFECTIVE_LEVEL_PRIORITY_BITS)))
-            as u8
+        // Enum contains all values from 0-15
+        unsafe { core::mem::transmute(priority & 0xF) }
     }
 }
