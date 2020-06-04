@@ -68,10 +68,10 @@ pub trait EclicExt {
     fn reset();
 
     /// Set interrupts threshold level
-    fn set_threshold_level(level: u8);
+    fn set_threshold_level(level: Level);
 
     /// Get interrupts threshold level
-    fn get_threshold_level() -> u8;
+    fn get_threshold_level() -> Level;
 
     fn set_level_priority_bits(lp: LevelPriorityBits);
 
@@ -143,13 +143,13 @@ impl EclicExt for ECLIC {
     }
 
     #[inline]
-    fn set_threshold_level(level: u8) {
-        unsafe { (*Self::ptr()).mth.write(|w| w.mth().bits(level)) }
+    fn set_threshold_level(level: Level) {
+        unsafe { (*Self::ptr()).mth.write(|w| w.mth().bits(level as u8)) }
     }
 
     #[inline]
-    fn get_threshold_level() -> u8 {
-        unsafe { (*Self::ptr()).mth.read().mth().bits() }
+    fn get_threshold_level() -> Level {
+        unsafe { core::mem::transmute((*Self::ptr()).mth.read().mth().bits() & 0xF) }
     }
 
     #[inline]
