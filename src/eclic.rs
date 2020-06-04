@@ -6,11 +6,11 @@ const EFFECTIVE_LEVEL_PRIORITY_BITS: u8 = 4;
 #[repr(u8)]
 #[derive(Debug)]
 pub enum LevelPriorityBits {
-    Level0Priority4 = 0,
-    Level1Priority3 = 1,
-    Level2Priority2 = 2,
-    Level3Priority1 = 3,
-    Level4Priority0 = 4,
+    L0P4 = 0,
+    L1P3 = 1,
+    L2P2 = 2,
+    L3P1 = 3,
+    L4P0 = 4,
 }
 
 #[repr(u8)]
@@ -157,11 +157,11 @@ impl EclicExt for ECLIC {
     #[inline]
     fn get_level_priority_bits() -> Option<LevelPriorityBits> {
         match unsafe { (*Self::ptr()).cliccfg.read().nlbits().bits() } {
-            0 => Some(LevelPriorityBits::Level0Priority4),
-            1 => Some(LevelPriorityBits::Level1Priority3),
-            2 => Some(LevelPriorityBits::Level2Priority2),
-            3 => Some(LevelPriorityBits::Level3Priority1),
-            4 => Some(LevelPriorityBits::Level4Priority0),
+            0 => Some(LevelPriorityBits::L0P4),
+            1 => Some(LevelPriorityBits::L1P3),
+            2 => Some(LevelPriorityBits::L2P2),
+            3 => Some(LevelPriorityBits::L3P1),
+            4 => Some(LevelPriorityBits::L4P0),
             _ => None,
         }
     }
