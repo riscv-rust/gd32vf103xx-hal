@@ -1,10 +1,10 @@
 //! Timers
 
+use crate::rcu::{BaseFrequency, Enable, Rcu, Reset};
 use crate::time::Hertz;
-use crate::rcu::{Rcu, BaseFrequency, Enable, Reset};
 
-use gd32vf103_pac::{TIMER0, TIMER1, TIMER2, TIMER3, TIMER4, TIMER5, TIMER6};
 use embedded_hal::timer::{CountDown, Periodic};
+use gd32vf103_pac::{TIMER0, TIMER1, TIMER2, TIMER3, TIMER4, TIMER5, TIMER6};
 use void::Void;
 
 /// Hardware timer
@@ -36,6 +36,25 @@ macro_rules! hal {
                     t.start(timeout);
 
                     t
+                }
+
+                /// Starts listening for an `event`
+                pub fn listen(&mut self, event: Event) {
+                    match event {
+                        Event::TimeOut => self.tim.dmainten.write(|w| w.upie().set_bit()),
+                    }
+                }
+
+                /// Stops listening for an `event`
+                pub fn unlisten(&mut self, event: Event) {
+                    match event {
+                        Event::TimeOut => self.tim.dmainten.write(|w| w.upie().clear_bit()),
+                    }
+                }
+
+                /// Clears Update Interrupt Flag
+                pub fn clear_update_interrupt_flag(&mut self) {
+                    self.tim.intf.modify(|_, w| w.upif().clear_bit());
                 }
 
                 /// Releases the TIMER peripheral
