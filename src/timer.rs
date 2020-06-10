@@ -16,8 +16,8 @@ pub struct Timer<TIM> {
 
 /// Interrupt events
 pub enum Event {
-    /// Timer timed out / count down ended
-    TimeOut,
+    /// Update event. It usually happens due to the counter overflow/underflow.
+    Update,
 }
 
 macro_rules! hal {
@@ -41,14 +41,14 @@ macro_rules! hal {
                 /// Starts listening for an `event`
                 pub fn listen(&mut self, event: Event) {
                     match event {
-                        Event::TimeOut => self.tim.dmainten.write(|w| w.upie().set_bit()),
+                        Event::Update => self.tim.dmainten.write(|w| w.upie().set_bit()),
                     }
                 }
 
                 /// Stops listening for an `event`
                 pub fn unlisten(&mut self, event: Event) {
                     match event {
-                        Event::TimeOut => self.tim.dmainten.write(|w| w.upie().clear_bit()),
+                        Event::Update => self.tim.dmainten.write(|w| w.upie().clear_bit()),
                     }
                 }
 
