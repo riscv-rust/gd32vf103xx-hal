@@ -83,6 +83,16 @@ macro_rules! hal {
                     let car = (ticks / ((psc + 1) as u32)) as u16;
                     self.tim.psc.write(|w| unsafe { w.bits(psc) } );
                     self.tim.car.write(|w| unsafe { w.bits(car) } );
+
+                    // Set UPS=1 so an UPG will *not* trigger an interrupt
+                    self.tim.ctl0.modify(|_, w| w.ups().set_bit());
+                    // Trigger an UPG to clear the timer counter register
+                    // see user manual (v1.2) p.261 for details
+                    self.tim.swevg.write(|w| w.upg().set_bit());
+
+                    // clear any outstanding UPIF flag to ensure a clear start
+                    self.tim.intf.modify(|_, w| w.upif().clear_bit());
+
                     self.tim.ctl0.write(|w| { w
                         .updis().clear_bit()
                         .cen().set_bit()
