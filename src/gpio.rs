@@ -13,6 +13,15 @@ pub trait GpioExt {
     fn split(self, rcu: &mut Rcu) -> Self::Parts;
 }
 
+#[repr(u8)]
+pub enum Port {
+    PAx = 0,
+    PBx = 1,
+    PCx = 2,
+    PDx = 3,
+    PEx = 4,
+}
+
 /// Marker trait for active states.
 pub trait Active {}
 
@@ -188,7 +197,8 @@ macro_rules! gpio {
                 State,
                 Active,
                 Debugger,
-                Pxx
+                Pxx,
+                Port
             };
 
             /// GPIO parts
@@ -230,6 +240,10 @@ macro_rules! gpio {
             impl<MODE> Generic<MODE> {
                 pub fn downgrade(self) -> Pxx<MODE> {
                     Pxx::$PXx(self)
+                }
+
+                pub fn pin_number(&self) -> u8 {
+                    self.i
                 }
             }
 
@@ -289,6 +303,16 @@ macro_rules! gpio {
                 /// Pin
                 pub struct $PXi<MODE> {
                     _mode: PhantomData<MODE>,
+                }
+
+                impl<MODE> $PXi<MODE> {
+                    pub const fn port(&self) -> Port {
+                        Port::$PXx
+                    }
+
+                    pub const fn pin_number(&self) -> u8 {
+                        $i
+                    }
                 }
 
                 impl $PXi<Debugger> {
@@ -489,6 +513,14 @@ macro_rules! impl_pxx {
             $(
                 $pin($port::Generic<MODE>)
             ),*
+        }
+
+        impl<MODE> Pxx<MODE> {
+            pub fn pin_number(&self) -> u8 {
+                match self {
+                    $(Pxx::$pin(pin) => pin.pin_number()),*
+                }
+            }
         }
 
         impl<MODE> OutputPin for Pxx<Output<MODE>> {
