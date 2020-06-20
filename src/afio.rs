@@ -2,7 +2,7 @@
 
 use crate::pac::AFIO;
 use crate::rcu::{Rcu, Enable, Reset};
-use crate::gpio::{Debugger, Input, Floating};
+use crate::gpio::{Debugger, Input, Floating, Port};
 use crate::gpio::gpioa::{PA13, PA14, PA15};
 use crate::gpio::gpiob::{PB3, PB4};
 
@@ -53,6 +53,29 @@ impl Afio {
                 pb3.activate(),
                 pb4.activate()
             )
+        }
+    }
+
+    #[inline]
+    pub fn extiss(&mut self, port: Port, pin: u8) {
+        match pin {
+            0 => self.afio.extiss0.modify(|_, w| unsafe { w.exti0_ss().bits(port as u8)}),
+            1 => self.afio.extiss0.modify(|_, w| unsafe { w.exti1_ss().bits(port as u8)}),
+            2 => self.afio.extiss0.modify(|_, w| unsafe { w.exti2_ss().bits(port as u8)}),
+            3 => self.afio.extiss0.modify(|_, w| unsafe { w.exti3_ss().bits(port as u8)}),
+            4 => self.afio.extiss1.modify(|_, w| unsafe { w.exti4_ss().bits(port as u8)}),
+            5 => self.afio.extiss1.modify(|_, w| unsafe { w.exti5_ss().bits(port as u8)}),
+            6 => self.afio.extiss1.modify(|_, w| unsafe { w.exti6_ss().bits(port as u8)}),
+            7 => self.afio.extiss1.modify(|_, w| unsafe { w.exti7_ss().bits(port as u8)}),
+            8 => self.afio.extiss2.modify(|_, w| unsafe { w.exti8_ss().bits(port as u8)}),
+            9 => self.afio.extiss2.modify(|_, w| unsafe { w.exti9_ss().bits(port as u8)}),
+            10 => self.afio.extiss2.modify(|_, w| unsafe { w.exti10_ss().bits(port as u8)}),
+            11 => self.afio.extiss2.modify(|_, w| unsafe { w.exti11_ss().bits(port as u8)}),
+            12 => self.afio.extiss3.modify(|_, w| unsafe { w.exti12_ss().bits(port as u8)}),
+            13 => self.afio.extiss3.modify(|_, w| unsafe { w.exti13_ss().bits(port as u8)}),
+            14 => self.afio.extiss3.modify(|_, w| unsafe { w.exti14_ss().bits(port as u8)}),
+            15 => self.afio.extiss3.modify(|_, w| unsafe { w.exti15_ss().bits(port as u8)}),
+            _ => {}
         }
     }
 }
