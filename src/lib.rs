@@ -14,6 +14,7 @@ pub mod backup_domain;
 pub mod delay;
 pub mod eclic;
 pub mod exmc;
+pub mod exti;
 pub mod gpio;
 pub mod i2c;
 pub mod prelude;
