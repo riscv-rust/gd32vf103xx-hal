@@ -58,7 +58,7 @@ pub struct PwmTimer<'a, TIMER> {
 pub struct Channel(pub u8);
 
 macro_rules! pwm_timer {
-    ($($TIM:ident: ($tim:ident, $cvtype:ty),)+) => {
+    ($($TIM:ident: $tim:ident,)+) => {
         $(
             impl<'a> PwmTimer<'a, $TIM> {
                 pub fn new(timer: $TIM,
@@ -131,10 +131,10 @@ macro_rules! pwm_timer {
                     self.duty[channel.0 as usize] = duty;
                     self.disable(channel.clone());
                     match channel.0 {
-                        0 if self.ch0.is_some() => self.timer.ch0cv.write(|w| unsafe { w.bits(duty as $cvtype) }),
-                        1 if self.ch1.is_some() => self.timer.ch1cv.write(|w| unsafe { w.bits(duty as $cvtype) }),
-                        2 if self.ch2.is_some() => self.timer.ch2cv.write(|w| unsafe { w.bits(duty as $cvtype) }),
-                        3 if self.ch3.is_some() => self.timer.ch3cv.write(|w| unsafe { w.bits(duty as $cvtype) }),
+                        0 if self.ch0.is_some() => self.timer.ch0cv.write(|w| unsafe { w.bits(duty) }),
+                        1 if self.ch1.is_some() => self.timer.ch1cv.write(|w| unsafe { w.bits(duty) }),
+                        2 if self.ch2.is_some() => self.timer.ch2cv.write(|w| unsafe { w.bits(duty) }),
+                        3 if self.ch3.is_some() => self.timer.ch3cv.write(|w| unsafe { w.bits(duty) }),
                         _ => (),
                     }
                     self.enable(channel);
@@ -193,9 +193,9 @@ macro_rules! pwm_timer {
 pwm_timer! {
     // There is a quirk in the capture value register size in the SVD file.
     // For Timer0 the register is 16bits while all others have 32bits.
-    TIMER0: (timer0, u16),
-    TIMER1: (timer1, u32),
-    TIMER2: (timer2, u32),
-    TIMER3: (timer3, u32),
-    TIMER4: (timer4, u32),
+    TIMER0: timer0,
+    TIMER1: timer1,
+    TIMER2: timer2,
+    TIMER3: timer3,
+    TIMER4: timer4,
 }
