@@ -12,11 +12,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Added support for DMA
 - Add GitHub Actions
 - Added Spi::change_clock_frequency()
+- Added PWM API for remapping pins [#29].
 
 ### Changed
 
 - Use cchp.oaen bit to enable automatically all TIMER0 PWM channels
 - Replaced unreachable!() with panic!()
+
 
 ### Removed
 
