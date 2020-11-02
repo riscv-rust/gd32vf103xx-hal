@@ -191,8 +191,6 @@ macro_rules! pwm_timer {
 }
 
 pwm_timer! {
-    // There is a quirk in the capture value register size in the SVD file.
-    // For Timer0 the register is 16bits while all others have 32bits.
     TIMER0: timer0,
     TIMER1: timer1,
     TIMER2: timer2,
