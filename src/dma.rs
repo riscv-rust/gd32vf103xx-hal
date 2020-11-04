@@ -26,6 +26,12 @@ pub enum Half {
     Second,
 }
 
+pub enum Direction {
+    PeripherialToMemory,
+    MemoryToPeripherial,
+    MemoryToMemory,
+}
+
 pub struct CircBuffer<BUFFER, PAYLOAD>
 where
     BUFFER: 'static,
@@ -136,7 +142,7 @@ macro_rules! dma {
                 use crate::pac::{$DMAX, $dmaX};
                 use crate::rcu::{Rcu, Enable};
 
-                use crate::dma::{CircBuffer, DmaExt, Error, Event, Half, Transfer, W, RxDma, TxDma, TransferPayload};
+                use crate::dma::{CircBuffer, Direction, DmaExt, Error, Event, Half, Transfer, W, RxDma, TxDma, TransferPayload};
 
                 #[allow(clippy::manual_non_exhaustive)]
                 pub struct Channels((), $(pub $CX),+);
@@ -167,6 +173,22 @@ macro_rules! dma {
                         /// Number of bytes to transfer
                         pub fn set_transfer_length(&mut self, len: usize) {
                             self.cnt().write(|w| unsafe { w.cnt().bits(cast::u16(len).unwrap()) });
+                        }
+
+                        pub fn set_direction(&mut self, dir: Direction) {
+                            match dir {
+                                Direction::PeripherialToMemory => {
+                                    self.ctl().modify(|_, w| w.m2m().clear_bit());
+                                    self.ctl().modify(|_, w| w.dir().clear_bit())
+                                }
+                                Direction::MemoryToPeripherial => {
+                                    self.ctl().modify(|_, w| w.m2m().clear_bit());
+                                    self.ctl().modify(|_, w| w.dir().set_bit())
+                                }
+                                Direction::MemoryToMemory => {
+                                    self.ctl().modify(|_, w| w.m2m().set_bit())
+                                }
+                            };
                         }
 
                         /// Starts the DMA transfer
