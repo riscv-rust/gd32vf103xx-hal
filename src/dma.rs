@@ -114,10 +114,10 @@ pub struct W;
 macro_rules! dma {
     ($($DMAX:ident: ($dmaX:ident, {
         $($CX:ident: (
-            $ctlXT:ident,
-            $cntXT:ident,
-            $paddrXT:ident,
-            $maddrXT:ident,
+            $CTLX:ident,
+            $CNTX:ident,
+            $PADDRX:ident,
+            $MADDRX:ident,
             $ctlX:ident,
             $cntX:ident,
             $paddrX:ident,
@@ -216,19 +216,19 @@ macro_rules! dma {
                             unsafe { &(*$DMAX::ptr()).intc }
                         }
 
-                        pub fn ctl(&self) -> &$dmaX::$ctlXT {
+                        pub fn ctl(&self) -> &$dmaX::$CTLX {
                             unsafe { &(*$DMAX::ptr()).$ctlX }
                         }
 
-                        pub fn cnt(&self) -> &$dmaX::$cntXT {
+                        pub fn cnt(&self) -> &$dmaX::$CNTX {
                             unsafe { &(*$DMAX::ptr()).$cntX }
                         }
 
-                        pub fn paddr(&self) -> &$dmaX::$paddrXT {
+                        pub fn paddr(&self) -> &$dmaX::$PADDRX {
                             unsafe { &(*$DMAX::ptr()).$paddrX }
                         }
 
-                        pub fn maddr(&self) -> &$dmaX::$maddrXT {
+                        pub fn maddr(&self) -> &$dmaX::$MADDRX {
                             unsafe { &(*$DMAX::ptr()).$maddrX }
                         }
                     }
