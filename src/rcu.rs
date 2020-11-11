@@ -142,6 +142,7 @@ impl UnconfiguredRcu {
         rcu.cfg0.modify(|_, w| unsafe { w.apb2psc().bits(0b000) }); // CK_AHB
         let apb1_psc = 2;
         let apb2_psc = 1;
+        let adc_psc = 1;
 
         if self.hxtal.is_some() {
             // Enable external oscillator
@@ -196,6 +197,7 @@ impl UnconfiguredRcu {
             sysclk: Hertz(target_sysclk),
             apb1_psc,
             apb2_psc,
+            adc_psc,
             usbclk_valid
         };
 
@@ -211,6 +213,7 @@ pub struct Clocks {
     sysclk: Hertz,
     apb1_psc: u8,
     apb2_psc: u8,
+    adc_psc: u8,
     usbclk_valid: bool,
 }
 
@@ -258,6 +261,11 @@ impl Clocks {
         } else {
             Hertz(pclk1.0 * 2)
         }
+    }
+
+    /// Returns the frequency of the ADC base clock
+    pub fn adc(&self) -> Hertz {
+        Hertz(self.pclk2().0 / self.adc_psc as u32)
     }
 
     /// Returns whether the USBCLK clock frequency is valid for the USB peripheral
