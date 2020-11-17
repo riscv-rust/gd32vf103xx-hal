@@ -645,6 +645,24 @@ macro_rules! adc {
                         self.rb.ctl1.modify(|_, w| w.swicst().set_bit());
                     }
                 }
+                /// Enable interrupts for regular channel and inserted channel (if any)
+                pub fn enable_interrupt(&mut self) {
+                    if self.config.regular_channel.is_some() {
+                        self.rb.ctl1.modify(|_, w| w.eterc().set_bit());
+                    }
+                    if self.config.inserted_channel.is_some() {
+                        self.rb.ctl1.modify(|_, w| w.eteic().set_bit());
+                    }
+                }
+                /// Disable interrupts for regular channel and inserted channel (if any)
+                pub fn disable_interrupt(&mut self) {
+                    if self.config.regular_channel.is_some() {
+                        self.rb.ctl1.modify(|_, w| w.eterc().clear_bit());
+                    }
+                    if self.config.inserted_channel.is_some() {
+                        self.rb.ctl1.modify(|_, w| w.eteic().clear_bit());
+                    }
+                }
                 /// Wait for the conversion sequence to finished
                 pub fn wait_for_conversion(&self) {
                     while self.rb.stat.read().eoc().bit_is_clear() {}
