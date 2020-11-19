@@ -10,7 +10,7 @@ use crate::gpio::gpioc::{PC0, PC1, PC2, PC3, PC4, PC5};
 use crate::gpio::Analog;
 use crate::hal::adc::Channel;
 use crate::pac::{ADC0, ADC1};
-use crate::rcu::Rcu;
+use crate::rcu::{Enable, Rcu, Reset};
 
 macro_rules! adc_pins {
     ($ADC:ident, $($input:ty => $chan:expr),+ $(,)*) => {
@@ -447,18 +447,18 @@ impl Adc<ADC1, Disabled> {
 }
 
 macro_rules! adc {
-    ($($adc_type:ident => ($constructor_fn_name:ident, $rcu_en_field:ident, $rcu_rst_field:ident)),+ $(,)*) => {
+    ($($ADC:ident: $adc:ident,)+) => {
         $(
-            impl Adc<$adc_type, Disabled> {
+            impl Adc<$ADC, Disabled> {
                 /// Enables the ADC clock, resets the peripheral
-                pub fn $constructor_fn_name(adc: $adc_type, rcu: &mut Rcu) -> Self {
+                pub fn $adc(adc: $ADC, rcu: &mut Rcu) -> Self {
                     let mut adc = Self::default_from_rb(adc);
                     // enable ADC clock
-                    rcu.regs.apb2en.modify(|_, w| w.$rcu_en_field().set_bit());
+                    $ADC::enable(rcu);
                     // config default ADC clock
                     adc.set_clock(config::Clock::Apb2_div_16, rcu);
                     // adc_deinit
-                    adc.reset(rcu);
+                    $ADC::reset(rcu);
 
                     unsafe {
                         // reset inserted sequence
@@ -467,16 +467,12 @@ macro_rules! adc {
                     adc
                 }
                 /// Creates ADC with default settings
-                fn default_from_rb(rb: $adc_type) -> Self {
+                fn default_from_rb(rb: $ADC) -> Self {
                     Self {
                         rb,
                         config: config::AdcConfig::default(),
                         _enabled: PhantomData,
                     }
-                }
-                fn reset(&mut self, rcu: &mut Rcu) {
-                    rcu.regs.apb2rst.modify(|_, w| w.$rcu_rst_field().set_bit());
-                    rcu.regs.apb2rst.modify(|_, w| w.$rcu_rst_field().clear_bit());
                 }
                 fn configure(&mut self) {
                     let config = &self.config;
@@ -577,7 +573,7 @@ macro_rules! adc {
                 /// - 0 -> ISQ3
                 /// - 1 -> ISQ2
                 /// - 2 -> ISQ1
-                /// - 3 -> ISQ0
+                /// - 3 -> ISQ0, single mode
                 pub fn configure_inserted_channel<CHANNEL>(
                     &mut self,
                     rank: u8,
@@ -614,7 +610,7 @@ macro_rules! adc {
                     self.set_channel_sample_time(channel, sample_time);
                 }
                 /// Enables the adc
-                pub fn enable(mut self) -> Adc<$adc_type, Enabled> {
+                pub fn enable(mut self) -> Adc<$ADC, Enabled> {
                     self.pre_configure(self.config.resolution);
                     self.configure();
                     self.rb.ctl1.modify(|_, w| w.adcon().set_bit());
@@ -626,9 +622,9 @@ macro_rules! adc {
                 }
             }
 
-            impl Adc<$adc_type, Enabled> {
+            impl Adc<$ADC, Enabled> {
                 /// Disable the ADC
-                pub fn disable(self) -> Adc<$adc_type, Disabled> {
+                pub fn disable(self) -> Adc<$ADC, Disabled> {
                     self.rb.ctl1.modify(|_, w| w.adcon().clear_bit());
                     Adc {
                         rb: self.rb,
@@ -717,8 +713,8 @@ macro_rules! adc {
 }
 
 adc!(
-    ADC0 => (adc0, adc0en, adc0rst),
-    ADC1 => (adc1, adc1en, adc1rst)
+    ADC0: adc0,
+    ADC1: adc1,
 );
 
 /// Internal temperature sensor
