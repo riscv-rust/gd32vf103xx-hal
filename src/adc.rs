@@ -147,12 +147,30 @@ pub struct Adc<ADC> {
     clocks: Clocks,
 }
 
+/// Handle an ADC configured in Single conversion mode for Regular Channels
+///
+/// This is used to manage OneShot conversion. This is created by
+/// [Adc::regular_oneshot()](crate::adc::Adc::regular_oneshot).
+///
+/// All configuration for the single conversion must be done using these
+/// functions.
+/// They can be chain like this:
+///
+///
+/// ```ignore
+///  oneshot.set_align(adc::Align::Left)
+///         .set_sample_time(adc::SampleTime::T_28)
+///         .set_offset(2048)
+/// ```
 pub struct AdcRegularOneShot<ADC> {
     adc: ADC,
     sample_time: SampleTime,
     align: Align,
 }
 
+/// Handle an ADC configured in Single conversion mode for Inserted Channels
+///
+/// Please see [AdcRegularOneShot](crate::adc::AdcRegularChannel)
 pub struct AdcInsertedOneShot<ADC> {
     adc: ADC,
     sample_time: SampleTime,
@@ -160,6 +178,7 @@ pub struct AdcInsertedOneShot<ADC> {
     align: Align,
 }
 
+#[doc(hidden)]
 pub trait AdcRegularChannel {
     fn set_channel_sequence(&mut self, channels: &[u8]);
     fn set_channel_sample_time(&mut self, channel: u8, sample_time: SampleTime);
@@ -168,6 +187,7 @@ pub trait AdcRegularChannel {
     fn power_down(&mut self);
 }
 
+#[doc(hidden)]
 pub trait AdcInsertedChannel {
     fn set_channel_sequence(&mut self, channels: &[u8]);
     fn set_channel_offset(&mut self, channel: u8, offset: u16);
@@ -182,11 +202,47 @@ macro_rules! adc_hal {
         $ADC:ident: ($adc:ident),
     )+) => {
         $(
+            /// Abstract the ADC
+            ///
+            /// All of these functions can be used to configure the ADC. But you
+            /// should prefer to use the simplified implementation. For example,
+            /// for OneShot conversion mode (Single Conversion mode) you can use
+            /// directly [inserted_oneshot()](crate::adc::Adc::inserted_oneshot)
+            /// or [regular_oneshot()](crate::adc::Adc::regular_oneshot):
+            ///
+            /// ```no_run
+            /// use gd32vf103xx_hal::{adc, pac};
+            /// use gd32vf103xx_hal::gpio::GpioExt;
+            /// use gd32vf103xx_hal::rcu::RcuExt;
+            ///
+            /// use embedded_hal::adc::OneShot;
+            ///
+            /// fn main() {
+            ///
+            ///     let dp = pac::Peripherals::take().unwrap();
+            ///     let mut rcu = dp.RCU.configure().freeze();
+            ///
+            ///     let gpioa = dp.GPIOA.split(&mut rcu);
+            ///     let mut pa3 = gpioa.pa3.into_analog();
+            ///     let adc = adc::Adc::new(&mut rcu, dp.ADC0);
+            ///
+            ///     let mut oneshot = adc.inserted_oneshot()
+            ///         .set_align(adc::Align::Left)
+            ///         .set_sample_time(adc::SampleTime::T_55)
+            ///         .set_offset(2048)
+            ///         .configure();
+            ///
+            ///     /// ...
+            ///     /// Generate sample
+            ///     let value: i16 = oneshot.read(&mut pa3).unwrap();
+            /// }
+            /// ```
+            ///
+            /// The default value for Alignment is Align::Right and for
+            /// SampleTime is SampleTime::T_28.
+
             impl Adc<$ADC> {
                 /// Init a new Adc
-                ///
-                /// Sets all configurable parameters to one-shot defaults,
-                /// performs a boot-time calibration.
                 pub fn new(rcu: &mut Rcu, adc: $ADC) -> Self {
                     $ADC::enable(rcu);
                     $ADC::reset(rcu);
@@ -197,6 +253,10 @@ macro_rules! adc_hal {
                     }
                 }
 
+                /// Use to preconfigure ADC into OneShot using Inserted Channels.
+                ///
+                /// The output AdcInsertedOneShot implements the
+                /// embedded_hal::adc::OneShot trait.
                 pub fn inserted_oneshot(self) -> AdcInsertedOneShot<Self> {
                     AdcInsertedOneShot {
                         adc: self,
@@ -206,6 +266,7 @@ macro_rules! adc_hal {
                     }
                 }
 
+                #[doc(hidden)]
                 pub fn inserted_oneshot_setup(&mut self, align: Align) {
                     /* Configure in Free Sync mode */
                     self.adc.ctl0.write(|w| unsafe { w.syncm().bits(0) });
@@ -223,6 +284,11 @@ macro_rules! adc_hal {
                     self.calibrate();
                 }
 
+
+                /// Use to preconfigure ADC into OneShot using Regular Channels.
+                ///
+                /// The output AdcRegularOneShot implements the
+                /// embedded_hal::adc::OneShot trait.
                 pub fn regular_oneshot(self) -> AdcRegularOneShot<Self> {
                     AdcRegularOneShot {
                         adc: self,
@@ -231,6 +297,7 @@ macro_rules! adc_hal {
                     }
                 }
 
+                #[doc(hidden)]
                 pub fn regular_oneshot_setup(&mut self, align: Align) {
                     /* Configure in Free Sync mode */
                     self.adc.ctl0.write(|w| unsafe { w.syncm().bits(0) });
@@ -248,6 +315,14 @@ macro_rules! adc_hal {
                     self.calibrate();
                 }
 
+                /// Power up the ADC.
+                ///
+                /// This function power up the ADC to be ready for conversion.
+                /// It also wait the ADC is fully stabilized, according to the
+                /// documentation (14 ADC cycles).
+                ///
+                /// This is automatically called, when you use a pre-configured
+                /// handler.
                 pub fn power_up(&mut self) {
                     /* Up and wait ADC is stabilized. */
                     self.adc.ctl1.modify(|_, w| w.adcon().set_bit());
@@ -261,10 +336,25 @@ macro_rules! adc_hal {
                     delay.delay_us(14_000_000 / clocks.adc().0);
                 }
 
+                /// Power down the ADC.
+                ///
+                /// It deactivates the ADC. The ADC is not able to performs new
+                /// conversion. This is usefull when reducing power consumption
+                /// is needed.
+                ///
+                /// This function is automatically called when you release() a
+                /// pre-configured handler.
                 pub fn power_down(&mut self) {
                     self.adc.ctl1.modify(|_, w| w.adcon().clear_bit());
                 }
 
+                /// Calibrate the ADC
+                ///
+                /// This function auto-calibrate the internal ADC hardwarly. It
+                /// consume some ADC cycle to perfoms the calibration.
+                ///
+                /// This function is automatically called when you use
+                /// pre-configured handlers.
                 fn calibrate(&mut self) {
                     self.adc.ctl1.modify(|_, w| { w.rstclb().set_bit() });
                     while self.adc.ctl1.read().rstclb().bit_is_set() {}
@@ -273,6 +363,7 @@ macro_rules! adc_hal {
                     while self.adc.ctl1.read().clb().bit_is_set() {}
                 }
 
+                /// Specify the SampleTime for a Channel
                 pub fn set_channel_sample_time(&mut self, chan: u8, sample_time: SampleTime) {
                     let sample_time = sample_time.into();
                     match chan {
@@ -299,6 +390,15 @@ macro_rules! adc_hal {
                     }
                 }
 
+                /// Set the Regular sequence of conversion
+                ///
+                /// In Single conversion mode, only the first channel of the
+                /// sequence is converted.
+                ///
+                /// For other modes, it defined the sequence in which order
+                /// channels will be converted.
+                ///
+                /// Up to 18 elements for regular channels.
                 pub fn set_regular_sequence(&mut self, channels: &[u8]) {
                     let len = channels.len();
                     let bits = channels.iter().take(6).enumerate().fold(0u32, |s, (i, c)|
@@ -328,6 +428,11 @@ macro_rules! adc_hal {
                     self.adc.rsq0.modify(|_, w| unsafe { w.rl().bits((len-1) as u8) });
                 }
 
+                /// Set the Inserted sequence of convesion
+                ///
+                /// See [set_regular_sequence()](crate::adc::Adc::set_regular_sequence)
+                ///
+                /// Up to 4 elements for inserted channels.
                 pub fn set_inserted_sequence(&mut self, channels: &[u8]) {
                     let len = channels.len();
 
@@ -339,6 +444,10 @@ macro_rules! adc_hal {
                     self.adc.isq.modify(|_, w| unsafe { w.il().bits((len-1) as u8) });
                 }
 
+                /// Set the Offset for Inserted Channels.
+                ///
+                /// Valid Channels are 0..3. The offset is 12-bits and it is
+                /// computed before the alignment.
                 pub fn set_inserted_channel_offset(&mut self, chan: u8, offset: u16) {
                     match chan {
                         0 => self.adc.ioff0.write(|w| unsafe { w.ioff().bits(offset) } ),
@@ -349,6 +458,12 @@ macro_rules! adc_hal {
                     }
                 }
 
+                /// Ask the ADC to perfom a conversion for Regular Channels.
+                ///
+                /// Trigger a new sample by software.
+                ///
+                /// The ADC should be correctly configured before calling
+                /// this function.
                 pub fn regular_oneshot_convert(&mut self) -> u16 {
                     /* trigger a new sample */
                     self.adc.ctl1.modify(|_, w| w.swrcst().set_bit());
@@ -361,6 +476,9 @@ macro_rules! adc_hal {
                     rdata
                 }
 
+                /// Ask the ADC to perform a conversion for Inserted Channels.
+                ///
+                /// See [regular_oneshot_convert()](crate::adc::Adc::regular_oneshot_convert)
                 pub fn inserted_oneshot_convert(&mut self) -> i16 {
                     /* trigger a new sample */
                     self.adc.ctl1.modify(|_, w| w.swicst().set_bit());
@@ -463,16 +581,30 @@ macro_rules! adc_common_oneshot {
     ($ONESHOT:ident, $ch_type:ident, $result:ty) => {
         impl<T: $ch_type > $ONESHOT<T>
         {
+            /// Do a conversion in Single conversion mode
+            ///
+            /// This function could be used directly or trough the OneShot trait.
             pub fn convert(&mut self, channel: u8) -> $result {
                 self.prepare(channel);
                 self.adc.oneshot_convert()
             }
 
+            /// Configure for real the ADC
+            ///
+            /// All other functions (expect convert()) just save the configure.
+            /// This function apply all saved parameter to the ADC.
+            ///
+            /// This function must be called before to perform conversion.
             pub fn configure(mut self) -> Self {
                 self.adc.oneshot_setup(self.align);
                 self
             }
 
+            /// Release the ownership of the ADC
+            ///
+            /// This is useful if the ADC should be configured differently later.
+            ///
+            /// It also power down the ADC.
             pub fn release(mut self) -> T {
                 self.adc.power_down();
                 self.adc
