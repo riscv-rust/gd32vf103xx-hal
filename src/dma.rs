@@ -276,8 +276,8 @@ macro_rules! dma {
 
 
                             let intf = self.payload.channel.intf();
-                            let first_half_is_done = intf.$errifX().bit_is_set();
-                            let second_half_is_done = intf.$htfifX().bit_is_set();
+                            let first_half_is_done = intf.$htfifX().bit_is_set();
+                            let second_half_is_done = intf.$ftfifX().bit_is_set();
 
                             if (half_being_read == Half::First && second_half_is_done) ||
                                 (half_being_read == Half::Second && first_half_is_done) {
