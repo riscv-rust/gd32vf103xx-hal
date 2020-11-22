@@ -290,8 +290,8 @@ macro_rules! dma {
                         /// Returns the `Half` of the buffer that can be read
                         pub fn readable_half(&mut self) -> Result<Half, Error> {
                             let intf = self.payload.channel.intf();
-                            let first_half_is_done = intf.$errifX().bit_is_set();
-                            let second_half_is_done = intf.$htfifX().bit_is_set();
+                            let first_half_is_done = intf.$htfifX().bit_is_set();
+                            let second_half_is_done = intf.$ftfifX().bit_is_set();
 
                             if first_half_is_done && second_half_is_done {
                                 return Err(Error::Overrun);
