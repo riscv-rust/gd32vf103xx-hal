@@ -204,7 +204,7 @@ macro_rules! dma {
 
                         /// Returns `true` if there's a transfer in progress
                         pub fn in_progress(&self) -> bool {
-                            self.intf().$htfifX().bit_is_clear()
+                            self.intf().$ftfifX().bit_is_clear()
                         }
                     }
 
