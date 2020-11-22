@@ -312,7 +312,7 @@ macro_rules! dma {
                                 }
                                 Half::Second => {
                                     if first_half_is_done {
-                                        self.payload.channel.intc().write(|w| w.$errifcX().set_bit());
+                                        self.payload.channel.intc().write(|w| w.$htfifcX().set_bit());
 
                                         self.readable_half = Half::First;
                                         Half::First
