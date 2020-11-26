@@ -2,13 +2,12 @@
 //!
 use core::marker::PhantomData;
 
-// NOTE: embedded_hal's Channel is not suitable for this rank + channel style ADC.
 use crate::delay::McycleDelay;
 use crate::gpio::gpioa::{PA0, PA1, PA2, PA3, PA4, PA5, PA6, PA7};
 use crate::gpio::gpiob::{PB0, PB1};
 use crate::gpio::gpioc::{PC0, PC1, PC2, PC3, PC4, PC5};
 use crate::gpio::Analog;
-use crate::hal::adc::Channel;
+use crate::hal::adc::{Channel, OneShot};
 use crate::pac::{ADC0, ADC1};
 use crate::rcu::{Enable, Rcu, Reset};
 
@@ -92,7 +91,7 @@ pub mod config {
     }
 
     /// Regular group trigger source.
-    #[derive(Debug, Clone, Copy)]
+    #[derive(Debug, Clone, Copy, PartialEq)]
     pub enum RegularExternalTrigger {
         /// TIMER0 CH0 event select
         Timer0_Ch0 = 0b000,
@@ -113,7 +112,7 @@ pub mod config {
     }
 
     /// Inserted group trigger source.
-    #[derive(Debug, Clone, Copy)]
+    #[derive(Debug, Clone, Copy, PartialEq)]
     pub enum InsertedExternalTrigger {
         /// TIMER0 TRGO event select
         Timer2_Trgo = 0b000,
@@ -152,7 +151,7 @@ pub mod config {
     }
 
     /// Scan enable/disable
-    #[derive(Debug, Clone, Copy)]
+    #[derive(Debug, Clone, Copy, PartialEq)]
     pub enum Scan {
         /// Scan mode disabled
         Disabled,
@@ -169,7 +168,7 @@ pub mod config {
     }
 
     /// Continuous mode enable/disable
-    #[derive(Debug, Clone, Copy)]
+    #[derive(Debug, Clone, Copy, PartialEq)]
     pub enum Continuous {
         /// Single mode, continuous disabled
         Single,
@@ -706,6 +705,58 @@ macro_rules! adc {
                 /// Read data from inserted channel 3
                 pub fn read_idata3(&self) -> u16 {
                     self.rb.idata3.read().idatan().bits()
+                }
+
+                /// Do oneshot conversion.
+                fn convert(&mut self, channel: u8) -> u16 {
+                    // convert using regular channel, single mode
+                    // scan mode check
+                    if self.config.scan != config::Scan::Disabled {
+                        panic!("Scan mode must be disabled for oneshot conversion");
+                    }
+                    // continuous mode check
+                    if self.config.continuous != config::Continuous::Single {
+                        panic!("Only single mode allowed for oneshot conversion");
+                    }
+                    // regular channel check
+                    if self.config.regular_channel.as_ref()
+                        .map(|conf| conf.external_trigger != config::RegularExternalTrigger::None)
+                        .unwrap_or(false)
+                    {
+                        panic!("Regular channel's external trigger must be set to software");
+                    }
+                    // rank setting, use rsq[4:0]
+                    unsafe {
+                        self.rb.rsq0.modify(|_, w| {
+                            w.rsq12().bits(channel)
+                        });
+                    }
+                    // sample time setting, use default
+                    let sample_time = self.config.default_sample_time;
+                    unsafe {
+                        self.rb.sampt0.modify(|_, w| {
+                            w.spt12().bits(sample_time as u8)
+                        });
+                    }
+
+                    self.enable_software_trigger();
+                    self.wait_for_conversion();
+                    let res = self.read_rdata();
+                    self.clear_end_of_conversion_flag();
+                    res
+                }
+            }
+
+            impl<WORD, PIN> OneShot<$ADC, WORD, PIN> for Adc<$ADC, Enabled>
+            where
+                WORD: From<u16>,
+                PIN: Channel<$ADC, ID = u8>
+            {
+                type Error = ();
+
+                fn read(&mut self, _pin: &mut PIN) -> nb::Result<WORD, Self::Error> {
+                    let res = self.convert(PIN::channel());
+                    Ok(res.into())
                 }
             }
         )+
