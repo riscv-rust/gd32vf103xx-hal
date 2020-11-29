@@ -191,6 +191,10 @@ pub mod config {
     }
 
     impl RegularChannelGroupConfig {
+        /// Create a default RegularChannelGroupConfig
+        pub fn new() -> Self {
+            Self::default()
+        }
         /// change the external_trigger field
         pub fn external_trigger(mut self, external_trigger: RegularExternalTrigger) -> Self {
             self.external_trigger = external_trigger;
@@ -231,6 +235,10 @@ pub mod config {
     }
 
     impl InsertedChannelGroupConfig {
+        /// Create a default InsertedChannelGroupConfig
+        pub fn new() -> Self {
+            Self::default()
+        }
         /// change the external_trigger field
         pub fn external_trigger(mut self, external_trigger: InsertedExternalTrigger) -> Self {
             self.external_trigger = external_trigger;
