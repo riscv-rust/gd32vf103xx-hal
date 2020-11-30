@@ -153,6 +153,7 @@ impl From<PartialRemap2> for u8 {
 /// let max = pwm_t0.get_max_duty();
 /// pwm_t0.set_period(100.hz());
 /// pwm_t0.set_duty(Channel::CH0, max / 4); // 25% duty cycle
+/// pwm_t0.enable(Channel::CH0);
 ///
 /// ```
 pub struct PwmTimer<TIMER, REMAP> {
@@ -278,14 +279,12 @@ macro_rules! pwm_timer {
                     duty = self.max_duty_cycle
                 }
                 self.duty[channel as usize] = duty;
-                self.disable(channel.clone());
                 match channel {
                     Channel::CH0 => self.timer.ch0cv.write(|w| unsafe { w.bits(duty) }),
                     Channel::CH1 => self.timer.ch1cv.write(|w| unsafe { w.bits(duty) }),
                     Channel::CH2 => self.timer.ch2cv.write(|w| unsafe { w.bits(duty) }),
                     Channel::CH3 => self.timer.ch3cv.write(|w| unsafe { w.bits(duty) }),
                 }
-                self.enable(channel);
             }
 
             fn set_period<P>(&mut self, period: P)

@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Use cchp.oaen bit to enable automatically all TIMER0 PWM channels
 - Replaced unreachable!() with panic!()
+- Enabling PWM is now explicit [#30].
 
 
 ### Removed
