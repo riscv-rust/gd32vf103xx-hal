@@ -228,16 +228,16 @@ macro_rules! wait_for_flag {
         let stat0 = $i2c.stat0.read();
 
         if stat0.berr().bit_is_set() {
-            $i2c.stat0.write(|w| w.berr().clear_bit());
+            $i2c.stat0.modify(|_, w| w.berr().clear_bit());
             Err(Other(Error::Bus))
         } else if stat0.lostarb().bit_is_set() {
-            $i2c.stat0.write(|w| w.lostarb().clear_bit());
+            $i2c.stat0.modify(|_, w| w.lostarb().clear_bit());
             Err(Other(Error::Arbitration))
         } else if stat0.aerr().bit_is_set() {
-            $i2c.stat0.write(|w| w.aerr().clear_bit());
+            $i2c.stat0.modify(|_, w| w.aerr().clear_bit());
             Err(Other(Error::Acknowledge))
         } else if stat0.ouerr().bit_is_set() {
-            $i2c.stat0.write(|w| w.ouerr().clear_bit());
+            $i2c.stat0.modify(|_, w| w.ouerr().clear_bit());
             Err(Other(Error::Overrun))
         } else if stat0.$flag().bit_is_set() {
             Ok(())
