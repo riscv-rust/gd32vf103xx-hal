@@ -1,3 +1,6 @@
+// Copyright 2019 Luo Jia
+// MIT License
+
 //! CRC calculation unit
 //!
 //! The hardware cyclic redundancy check (CRC) unit on GD32VF103 has 32-bit data
