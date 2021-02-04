@@ -8,9 +8,11 @@
 pub use gd32vf103_pac as pac;
 
 use embedded_hal as hal;
+use embedded_can as hal_can;
 
 pub mod afio;
 pub mod backup_domain;
+pub mod can;
 pub mod delay;
 pub mod eclic;
 pub mod exmc;

@@ -119,9 +119,11 @@ macro_rules! remap {
 }
 
 remap! {
+    CAN0 => (can0_remap, u8),
+    CAN1 => (can1_remap, bool),
     I2C0 => (i2c0_remap, bool),
     SPI0 => (spi0_remap, bool),
-    SPI2 => (spi2_remap, bool),
+    SPI2 => (spi2_remap, bool),    
     USART0 => (usart0_remap, bool),
     USART1 => (usart1_remap, bool),
     USART2 => (usart2_remap, u8),
