@@ -128,10 +128,8 @@ macro_rules! dma {
             $cntX:ident,
             $paddrX:ident,
             $maddrX:ident,
-            $errifX:ident,
             $htfifX:ident,
             $ftfifX:ident,
-            $errifcX:ident,
             $htfifcX:ident,
             $ftfifcX:ident,
             $gifcX:ident
@@ -451,44 +449,44 @@ dma! {
         C0: (
             CH0CTL, CH0CNT, CH0PADDR, CH0MADDR,
             ch0ctl, ch0cnt, ch0paddr, ch0maddr,
-            errif0, htfif0, ftfif0,
-            errifc0, htfifc0, ftfifc0, gifc0
+            htfif0, ftfif0,
+            htfifc0, ftfifc0, gifc0
         ),
         C1: (
             CH1CTL, CH1CNT, CH1PADDR, CH1MADDR,
             ch1ctl, ch1cnt, ch1paddr, ch1maddr,
-            errif1, htfif1, ftfif1,
-            errifc1, htfifc1, ftfifc1, gifc1
+            htfif1, ftfif1,
+            htfifc1, ftfifc1, gifc1
         ),
         C2: (
             CH2CTL, CH2CNT, CH2PADDR, CH2MADDR,
             ch2ctl, ch2cnt, ch2paddr, ch2maddr,
-            errif2, htfif2, ftfif2,
-            errifc2, htfifc2, ftfifc2, gifc2
+            htfif2, ftfif2,
+            htfifc2, ftfifc2, gifc2
         ),
         C3: (
             CH3CTL, CH3CNT, CH3PADDR, CH3MADDR,
             ch3ctl, ch3cnt, ch3paddr, ch3maddr,
-            errif3, htfif3, ftfif3,
-            errifc3, htfifc3, ftfifc3, gifc3
+            htfif3, ftfif3,
+            htfifc3, ftfifc3, gifc3
         ),
         C4: (
             CH4CTL, CH4CNT, CH4PADDR, CH4MADDR,
             ch4ctl, ch4cnt, ch4paddr, ch4maddr,
-            errif4, htfif4, ftfif4,
-            errifc4, htfifc4, ftfifc4, gifc4
+            htfif4, ftfif4,
+            htfifc4, ftfifc4, gifc4
         ),
         C5: (
             CH5CTL, CH5CNT, CH5PADDR, CH5MADDR,
             ch5ctl, ch5cnt, ch5paddr, ch5maddr,
-            errif5, htfif5, ftfif5,
-            errifc5, htfifc5, ftfifc5, gifc5
+            htfif5, ftfif5,
+            htfifc5, ftfifc5, gifc5
         ),
         C6: (
             CH6CTL, CH6CNT, CH6PADDR, CH6MADDR,
             ch6ctl, ch6cnt, ch6paddr, ch6maddr,
-            errif6, htfif6, ftfif6,
-            errifc6, htfifc6, ftfifc6, gifc6
+            htfif6, ftfif6,
+            htfifc6, ftfifc6, gifc6
         ),
     }),
 
@@ -496,32 +494,32 @@ dma! {
         C0: (
             CH0CTL, CH0CNT, CH0PADDR, CH0MADDR,
             ch0ctl, ch0cnt, ch0paddr, ch0maddr,
-            errif0, htfif0, ftfif0,
-            errifc0, htfifc0, ftfifc0, gifc0
+            htfif0, ftfif0,
+            htfifc0, ftfifc0, gifc0
         ),
         C1: (
             CH1CTL, CH1CNT, CH1PADDR, CH1MADDR,
             ch1ctl, ch1cnt, ch1paddr, ch1maddr,
-            errif1, htfif1, ftfif1,
-            errifc1, htfifc1, ftfifc1, gifc1
+            htfif1, ftfif1,
+            htfifc1, ftfifc1, gifc1
         ),
         C2: (
             CH2CTL, CH2CNT, CH2PADDR, CH2MADDR,
             ch2ctl, ch2cnt, ch2paddr, ch2maddr,
-            errif2, htfif2, ftfif2,
-            errifc2, htfifc2, ftfifc2, gifc2
+            htfif2, ftfif2,
+            htfifc2, ftfifc2, gifc2
         ),
         C3: (
             CH3CTL, CH3CNT, CH3PADDR, CH3MADDR,
             ch3ctl, ch3cnt, ch3paddr, ch3maddr,
-            errif3, htfif3, ftfif3,
-            errifc3, htfifc3, ftfifc3, gifc3
+            htfif3, ftfif3,
+            htfifc3, ftfifc3, gifc3
         ),
         C4: (
             CH4CTL, CH4CNT, CH4PADDR, CH4MADDR,
             ch4ctl, ch4cnt, ch4paddr, ch4maddr,
-            errif4, htfif4, ftfif4,
-            errifc4, htfifc4, ftfifc4, gifc4
+            htfif4, ftfif4,
+            htfifc4, ftfifc4, gifc4
         ),
     }),
 }
