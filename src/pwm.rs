@@ -169,7 +169,6 @@ macro_rules! pwm_timer {
                     duty = self.max_duty_cycle
                 }
                 self.duty[channel.0 as usize] = duty;
-                self.disable(channel.clone());
                 match channel.0 {
                     0 if self.ch0.is_some() => self.timer.ch0cv.write(|w| unsafe { w.bits(duty) }),
                     1 if self.ch1.is_some() => self.timer.ch1cv.write(|w| unsafe { w.bits(duty) }),
@@ -177,7 +176,6 @@ macro_rules! pwm_timer {
                     3 if self.ch3.is_some() => self.timer.ch3cv.write(|w| unsafe { w.bits(duty) }),
                     _ => (),
                 }
-                self.enable(channel);
             }
 
             fn set_period<P>(&mut self, period: P) where
