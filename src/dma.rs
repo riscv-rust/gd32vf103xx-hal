@@ -229,28 +229,28 @@ macro_rules! dma {
                             }
                         }
 
-                        fn intf(&self) -> $dmaX::intf::R {
+                        pub fn intf(&self) -> $dmaX::intf::R {
                             // NOTE(unsafe) atomic read with no side effects
                             unsafe { (*$DMAX::ptr()).intf.read() }
                         }
 
-                        fn intc(&self) -> &$dmaX::INTC {
+                        pub fn intc(&self) -> &$dmaX::INTC {
                             unsafe { &(*$DMAX::ptr()).intc }
                         }
 
-                        fn ctl(&self) -> &$dmaX::$CTLX {
+                        pub fn ctl(&self) -> &$dmaX::$CTLX {
                             unsafe { &(*$DMAX::ptr()).$ctlX }
                         }
 
-                        fn cnt(&self) -> &$dmaX::$CNTX {
+                        pub fn cnt(&self) -> &$dmaX::$CNTX {
                             unsafe { &(*$DMAX::ptr()).$cntX }
                         }
 
-                        fn paddr(&self) -> &$dmaX::$PADDRX {
+                        pub fn paddr(&self) -> &$dmaX::$PADDRX {
                             unsafe { &(*$DMAX::ptr()).$paddrX }
                         }
 
-                        fn maddr(&self) -> &$dmaX::$MADDRX {
+                        pub fn maddr(&self) -> &$dmaX::$MADDRX {
                             unsafe { &(*$DMAX::ptr()).$maddrX }
                         }
                     }
