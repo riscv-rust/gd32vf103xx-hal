@@ -67,6 +67,7 @@ impl Pins<SPI1>
 pub struct Spi<SPI, PINS> {
     spi: SPI,
     pins: PINS,
+    base_freq: Hertz,
 }
 
 impl<PINS: Pins<SPI0>> Spi<SPI0, PINS> {
@@ -112,7 +113,9 @@ impl<SPI, PINS> Spi<SPI, PINS> where SPI: SpiX
         // disable SS output
         spi.ctl1.write(|w| w.nssdrv().clear_bit());
 
-        let br = match SPI::base_frequency(rcu).0 / freq.into().0 {
+        let base_freq = SPI::base_frequency(rcu);
+
+        let br = match base_freq.0 / freq.into().0 {
             0 => unreachable!(),
             1..=2 => 0b000,
             3..=5 => 0b001,
@@ -142,7 +145,38 @@ impl<SPI, PINS> Spi<SPI, PINS> where SPI: SpiX
             .spien().set_bit()      // Enable SPI peripheral
         });
 
-        Spi { spi, pins }
+        Spi { spi, pins, base_freq }
+    }
+
+    /// Change the frequency of operation of the SPI bus.
+    /// The maximum frequency for the SPI bus is the frequency
+    /// of the APB1 bus which is half the system frequency configured
+    /// with RCU.configure().sysclk(). Specifying a higher frequency causes panic.
+    pub fn change_clock_freq(&mut self, freq: impl Into<Hertz>) {
+        let br = match self.base_freq.0 / freq.into().0 {
+            0 => unreachable!(),
+            0..=2 => 0b000,
+            3..=5 => 0b001,
+            6..=11 => 0b010,
+            12..=23 => 0b011,
+            24..=47 => 0b100,
+            48..=95 => 0b101,
+            96..=191 => 0b110,
+            _ => 0b111,
+        };
+
+        // Save current SPI control register
+        let config = self.spi.ctl0.read().bits();
+
+        // Disable SPI (resets ctl0 registers)
+        self.spi.ctl0.write(|w| { w.spien().clear_bit()});
+
+        // Restore config, change frequency and re-enable SPI
+        self.spi.ctl0.write( |w| unsafe { w
+            .bits(config)
+            .psc().bits(br)
+            .spien().set_bit()
+        });
     }
 
     pub fn free(self) -> (SPI, PINS) {
