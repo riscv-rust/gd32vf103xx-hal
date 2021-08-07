@@ -165,15 +165,11 @@ impl<SPI, PINS> Spi<SPI, PINS> where SPI: SpiX
             _ => 0b111,
         };
 
-        // Save current SPI control register
-        let config = self.spi.ctl0.read().bits();
-
-        // Disable SPI (resets ctl0 registers)
-        self.spi.ctl0.write(|w| { w.spien().clear_bit()});
+        // Disable SPI
+        self.spi.ctl0.modify(|_, w| { w.spien().clear_bit()});
 
         // Restore config, change frequency and re-enable SPI
-        self.spi.ctl0.write( |w| unsafe { w
-            .bits(config)
+        self.spi.ctl0.modify( |_, w| unsafe { w
             .psc().bits(br)
             .spien().set_bit()
         });
