@@ -116,7 +116,7 @@ impl<SPI, PINS> Spi<SPI, PINS> where SPI: SpiX
         let base_freq = SPI::base_frequency(rcu);
 
         let br = match base_freq.0 / freq.into().0 {
-            0 => unreachable!(),
+            0 => panic!("Requested SPI frequency is too high"),
             1..=2 => 0b000,
             3..=5 => 0b001,
             6..=11 => 0b010,
@@ -154,8 +154,8 @@ impl<SPI, PINS> Spi<SPI, PINS> where SPI: SpiX
     /// with RCU.configure().sysclk(). Specifying a higher frequency causes panic.
     pub fn change_clock_freq(&mut self, freq: impl Into<Hertz>) {
         let br = match self.base_freq.0 / freq.into().0 {
-            0 => unreachable!(),
-            0..=2 => 0b000,
+            0 => panic!("Requested SPI frequency is too high"),
+            1..=2 => 0b000,
             3..=5 => 0b001,
             6..=11 => 0b010,
             12..=23 => 0b011,
