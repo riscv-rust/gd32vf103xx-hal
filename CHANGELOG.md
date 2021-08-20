@@ -6,10 +6,22 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+
 ### Added
+
+- Added support for DMA
+- Add GitHub Actions
+- Added Spi::change_clock_frequency()
 
 ### Changed
 
+- Use cchp.oaen bit to enable automatically all TIMER0 PWM channels
+- Replaced unreachable!() with panic!()
+
+### Removed
+
+- Remove unused errifx and errifcx fields from the DMA driver code
+- Remove Travis CI rules and status badge
 
 ## [v0.4.0] - 2020-11-01
 
