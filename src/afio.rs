@@ -125,4 +125,9 @@ remap! {
     USART0 => (usart0_remap, bool),
     USART1 => (usart1_remap, bool),
     USART2 => (usart2_remap, u8),
+    TIMER0 => (timer0_remap, u8),
+    TIMER1 => (timer1_remap, u8),
+    TIMER2 => (timer2_remap, u8),
+    TIMER3 => (timer3_remap, bool),
+    TIMER4 => (timer4ch3_iremap, bool),
 }
