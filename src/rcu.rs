@@ -280,6 +280,8 @@ macro_rules! base_freq {
 }
 
 base_freq! {
+    ADC0 => pclk2,
+    ADC1 => pclk2,
     I2C0 => pclk1,
     I2C1 => pclk1,
     SPI0 => pclk2,
