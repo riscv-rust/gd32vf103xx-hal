@@ -9,10 +9,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 
-- Added support for DMA
+### Changed
+
+### Removed
+
+## [v0.5.0] - 2021-09-04
+
+### Added
+
+- Add support for DMA
 - Add GitHub Actions
-- Added Spi::change_clock_frequency()
-- Added PWM API for remapping pins [#29].
+- Add Spi::change_clock_frequency()
+- Add PWM API for remapping pins [#29].
+- Add ADC support
 
 ### Changed
 
@@ -71,7 +80,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Make GPIO pin activate() public
 
-[Unreleased]: https://github.com/rust-embedded/riscv/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/riscv-rust/gd32vf103xx-hal/compare/v0.5.0...HEAD
+[v0.5.0]: https://github.com/riscv-rust/gd32vf103xx-hal/compare/v0.4.0...v0.5.0
 [v0.4.0]: https://github.com/riscv-rust/gd32vf103xx-hal/compare/v0.3.0...v0.4.0
 [v0.3.0]: https://github.com/rust-embedded/riscv/compare/v0.2.3...v0.3.0
 [v0.2.3]: https://github.com/riscv-rust/gd32vf103xx-hal/compare/v0.2.2...v0.2.3
