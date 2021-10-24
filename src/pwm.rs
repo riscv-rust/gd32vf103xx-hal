@@ -210,7 +210,7 @@ macro_rules! advanced_pwm_timer {
 macro_rules! general_pwm_timer {
     ($TIM:ident: $tim:ident) => {
         impl<REMAP: Into<u8> + Into<bool>> PwmTimer<$TIM, REMAP> {
-            pub fn new<R: Into<u8> + Into<bool>>(
+            pub fn new(
                 timer: $TIM,
                 pins: impl Pins<$TIM, REMAP>,
                 rcu: &mut Rcu,
