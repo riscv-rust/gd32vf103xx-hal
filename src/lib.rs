@@ -29,3 +29,6 @@ pub mod spi;
 pub mod time;
 pub mod timer;
 pub mod watchdog;
+
+#[cfg(feature = "usb_fs")]
+pub mod otg_fs;

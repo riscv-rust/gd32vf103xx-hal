@@ -26,3 +26,12 @@ features = ["unproven"]
 git = "https://github.com/katyo/gd32vf103-pac"
 branch = "upcoming"
 
+[dependencies.synopsys-usb-otg]
+git = "https://github.com/katyo/synopsys-usb-otg"
+branch = "gd32v-ng-cs"
+features = ["fs"]
+optional = true
+
+[features]
+default = []
+usb_fs = ["synopsys-usb-otg"]
