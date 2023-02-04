@@ -11,7 +11,6 @@ edition = "2018"
 
 [dependencies]
 bare-metal = "0.2.5"
-gd32vf103-pac = "0.4.0"
 riscv = "0.10.1"
 nb = "1.0.0"
 void = { version = "1.0.2", default-features = false }
@@ -22,3 +21,8 @@ embedded-dma = "0.2.0"
 [dependencies.embedded-hal]
 version = "0.2.7"
 features = ["unproven"]
+
+[dependencies.gd32vf103-pac]
+git = "https://github.com/katyo/gd32vf103-pac"
+branch = "upcoming"
+
