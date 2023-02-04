@@ -1,5 +1,5 @@
 use crate::pac::ECLIC;
-use riscv::interrupt::Nr;
+use bare_metal::Nr;
 
 const EFFECTIVE_LEVEL_PRIORITY_BITS: u8 = 4;
 
