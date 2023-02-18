@@ -206,18 +206,23 @@ impl<'a> FlashWriter<'a> {
     }
 
     /// Erase the Flash Sectors from `FLASH_START + start_offset` to `length`
-    pub fn erase(&mut self, start_offset: u32, length: usize) -> Result<()> {
-        self.valid_length(start_offset, length)?;
+    pub fn erase_range(&mut self, range: core::ops::Range<u32>) -> Result<()> {
+        self.valid_length(range.start, range.len())?;
 
         // Erase every sector touched by start_offset + length
         for offset in
-            (start_offset..start_offset + length as u32).step_by(SZ_1K as usize)
+            range.step_by(SZ_1K as usize)
         {
             self.page_erase(offset)?;
         }
 
         // Report Success
         Ok(())
+    }
+
+    /// Erase the Flash Sectors from `FLASH_START + start_offset` to `length`
+    pub fn erase(&mut self, start_offset: u32, length: usize) -> Result<()> {
+        self.erase_range(start_offset..start_offset + length as u32)
     }
 
     /// Retrieve a slice of data from `FLASH_START + offset`
@@ -312,6 +317,53 @@ impl<'a> FlashWriter<'a> {
     /// assumed to have succeeded.
     pub fn change_verification(&mut self, verify: bool) {
         self.verify = verify;
+    }
+}
+
+#[cfg(feature = "embedded-storage")]
+impl embedded_storage::nor_flash::NorFlashError for Error {
+    fn kind(&self) -> embedded_storage::nor_flash::NorFlashErrorKind {
+        use embedded_storage::nor_flash::NorFlashErrorKind::*;
+
+        match self {
+            Error::AddressLargerThanFlash | Error::LengthTooLong => OutOfBounds,
+            Error::AddressMisaligned | Error::LengthNotMultiple2 => NotAligned,
+            Error::EraseError | Error::ProgrammingError | Error::WriteError | Error::VerifyError | Error::UnlockError | Error::LockError => Other,
+        }
+    }
+}
+
+#[cfg(feature = "embedded-storage")]
+impl<'a> embedded_storage::nor_flash::ErrorType for FlashWriter<'a> {
+    type Error = Error;
+}
+
+#[cfg(feature = "embedded-storage")]
+impl<'a> embedded_storage::nor_flash::ReadNorFlash for FlashWriter<'a> {
+    const READ_SIZE: usize = 1;
+
+    fn read(&mut self, offset: u32, bytes: &mut [u8]) -> Result<()> {
+        FlashWriter::read(self, offset, bytes.len()).map(|data| {
+            bytes.copy_from_slice(data);
+        })
+    }
+
+    fn capacity(&self) -> usize {
+        self.flash_sz.bytes() as _
+    }
+}
+
+#[cfg(feature = "embedded-storage")]
+impl<'a> embedded_storage::nor_flash::NorFlash for FlashWriter<'a> {
+    const WRITE_SIZE: usize = 2;
+    const ERASE_SIZE: usize = SZ_1K as _;
+
+    fn erase(&mut self, from: u32, to: u32) -> Result<()> {
+        FlashWriter::erase_range(self, from..to)
+    }
+
+    fn write(&mut self, offset: u32, bytes: &[u8]) -> Result<()> {
+        FlashWriter::write(self, offset, bytes)
     }
 }
 
