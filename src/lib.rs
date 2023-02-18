@@ -17,6 +17,7 @@ pub mod dma;
 pub mod eclic;
 pub mod exmc;
 pub mod exti;
+pub mod flash;
 pub mod gpio;
 pub mod i2c;
 pub mod prelude;
@@ -29,3 +30,6 @@ pub mod spi;
 pub mod time;
 pub mod timer;
 pub mod watchdog;
+
+#[cfg(feature = "usb_fs")]
+pub mod otg_fs;
