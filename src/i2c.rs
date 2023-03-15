@@ -495,7 +495,7 @@ macro_rules! hal {
                             self.nb.i2c.ctl0.modify(|_, w| w.acken().set_bit());
                         }
                         2 => {
-                            self.nb.i2c.ctl0.modify(|_, w| w.pecen().set_bit().acken().set_bit());
+                            self.nb.i2c.ctl0.modify(|_, w| w.poap().set_bit().acken().set_bit());
                             self.nb.i2c.stat0.read();
                             self.nb.i2c.stat1.read();
                             self.nb.i2c.ctl0.modify(|_, w| w.acken().clear_bit());
@@ -506,7 +506,7 @@ macro_rules! hal {
                             buffer[1] = self.nb.i2c.data.read().trb().bits();
 
                             busy_wait_cycles!(self.nb.wait_for_stop(), self.data_timeout)?;
-                            self.nb.i2c.ctl0.modify(|_, w| w.pecen().clear_bit().acken().clear_bit());
+                            self.nb.i2c.ctl0.modify(|_, w| w.poap().clear_bit().acken().clear_bit());
                             self.nb.i2c.ctl0.modify(|_, w| w.acken().set_bit());
                         }
                         buffer_len => {
