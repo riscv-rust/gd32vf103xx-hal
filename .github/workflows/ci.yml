@@ -24,3 +24,6 @@ jobs:
 
       - name: Check code
         run: cargo check --target ${{ matrix.target }}
+
+      - name: Check rt feature
+        run: cargo check --target ${{ matrix.target }} --features rt
