@@ -327,14 +327,14 @@ macro_rules! bus_enable {
         impl Enable for crate::pac::$PER {
             #[inline(always)]
             fn enable(rcu: &mut Rcu) {
-                interrupt::free(|_| {
+                interrupt::free(|| {
                     rcu.regs.$apben.modify(|_, w| w.$peren().set_bit());
                 });
             }
 
             #[inline(always)]
             fn disable(rcu: &mut Rcu) {
-                interrupt::free(|_| {
+                interrupt::free(|| {
                     rcu.regs.$apben.modify(|_, w| w.$peren().clear_bit());
                 });
             }
@@ -350,7 +350,7 @@ macro_rules! bus {
             impl Reset for crate::pac::$PER {
                 #[inline(always)]
                 fn reset(rcu: &mut Rcu) {
-                    interrupt::free(|_| {
+                    interrupt::free(|| {
                         rcu.regs.$apbrst.modify(|_, w| w.$perrst().set_bit());
                         rcu.regs.$apbrst.modify(|_, w| w.$perrst().clear_bit());
                     });

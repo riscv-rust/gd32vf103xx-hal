@@ -1,5 +1,4 @@
-use crate::pac::ECLIC;
-use riscv::interrupt::Nr;
+use crate::pac::{ECLIC, Interrupt};
 
 const EFFECTIVE_LEVEL_PRIORITY_BITS: u8 = 4;
 
@@ -84,43 +83,43 @@ pub trait EclicExt {
     fn get_priority_bits() -> u8;
 
     /// Setup `interrupt`
-    fn setup<I: Nr + Copy>(interrupt: I, tt: TriggerType, level: Level, priority: Priority);
+    fn setup(interrupt: Interrupt, tt: TriggerType, level: Level, priority: Priority);
 
     /// Enables `interrupt`
-    unsafe fn unmask<I: Nr>(interrupt: I);
+    unsafe fn unmask(interrupt: Interrupt);
 
     /// Disables `interrupt`
-    fn mask<I: Nr>(interrupt: I);
+    fn mask(interrupt: Interrupt);
 
     /// Checks if `interrupt` is enabled
-    fn is_enabled<I: Nr>(interrupt: I) -> bool;
+    fn is_enabled(interrupt: Interrupt) -> bool;
 
     /// Forces `interrupt` into pending state
-    fn pend<I: Nr>(interrupt: I);
+    fn pend(interrupt: Interrupt);
 
     /// Clears `interrupt`'s pending state
-    fn unpend<I: Nr>(interrupt: I);
+    fn unpend(interrupt: Interrupt);
 
     /// Checks if `interrupt` is pending
-    fn is_pending<I: Nr>(interrupt: I) -> bool;
+    fn is_pending(interrupt: Interrupt) -> bool;
 
     /// Set `interrupt` trigger type
-    fn set_trigger_type<I: Nr>(interrupt: I, tt: TriggerType);
+    fn set_trigger_type(interrupt: Interrupt, tt: TriggerType);
 
     /// Get `interrupt` trigger type
-    fn get_trigger_type<I: Nr>(interrupt: I) -> Option<TriggerType>;
+    fn get_trigger_type(interrupt: Interrupt) -> Option<TriggerType>;
 
     // Set `interrupt` level
-    fn set_level<I: Nr>(interrupt: I, level: Level);
+    fn set_level(interrupt: Interrupt, level: Level);
 
     // Get `interrupt` level
-    fn get_level<I: Nr>(interrupt: I) -> Level;
+    fn get_level(interrupt: Interrupt) -> Level;
 
     // Set `interrupt` priority
-    fn set_priority<I: Nr>(interrupt: I, priority: Priority);
+    fn set_priority(interrupt: Interrupt, priority: Priority);
 
     // Get `interrupt` interrupt
-    fn get_priority<I: Nr>(interrupt: I) -> Priority;
+    fn get_priority(interrupt: Interrupt) -> Priority;
 }
 
 impl EclicExt for ECLIC {
@@ -181,7 +180,7 @@ impl EclicExt for ECLIC {
         EFFECTIVE_LEVEL_PRIORITY_BITS - Self::get_level_bits()
     }
 
-    fn setup<I: Nr + Copy>(interrupt: I, tt: TriggerType, level: Level, priority: Priority) {
+    fn setup(interrupt: Interrupt, tt: TriggerType, level: Level, priority: Priority) {
         Self::mask(interrupt);
         Self::set_trigger_type(interrupt, tt);
         Self::set_level(interrupt, level);
@@ -190,8 +189,8 @@ impl EclicExt for ECLIC {
     }
 
     #[inline]
-    unsafe fn unmask<I: Nr>(interrupt: I) {
-        let nr = usize::from(interrupt.nr());
+    unsafe fn unmask(interrupt: Interrupt) {
+        let nr = interrupt as usize;
 
         (*Self::ptr()).clicints[nr]
             .clicintie
@@ -199,8 +198,8 @@ impl EclicExt for ECLIC {
     }
 
     #[inline]
-    fn mask<I: Nr>(interrupt: I) {
-        let nr = usize::from(interrupt.nr());
+    fn mask(interrupt: Interrupt) {
+        let nr = interrupt as usize;
 
         unsafe {
             (*Self::ptr()).clicints[nr]
@@ -210,8 +209,8 @@ impl EclicExt for ECLIC {
     }
 
     #[inline]
-    fn is_enabled<I: Nr>(interrupt: I) -> bool {
-        let nr = usize::from(interrupt.nr());
+    fn is_enabled(interrupt: Interrupt) -> bool {
+        let nr = interrupt as usize;
 
         unsafe {
             (*Self::ptr()).clicints[nr]
@@ -223,8 +222,8 @@ impl EclicExt for ECLIC {
     }
 
     #[inline]
-    fn pend<I: Nr>(interrupt: I) {
-        let nr = usize::from(interrupt.nr());
+    fn pend(interrupt: Interrupt) {
+        let nr = interrupt as usize;
 
         unsafe {
             (*Self::ptr()).clicints[nr]
@@ -234,8 +233,8 @@ impl EclicExt for ECLIC {
     }
 
     #[inline]
-    fn unpend<I: Nr>(interrupt: I) {
-        let nr = usize::from(interrupt.nr());
+    fn unpend(interrupt: Interrupt) {
+        let nr = interrupt as usize;
 
         unsafe {
             (*Self::ptr()).clicints[nr]
@@ -245,8 +244,8 @@ impl EclicExt for ECLIC {
     }
 
     #[inline]
-    fn is_pending<I: Nr>(interrupt: I) -> bool {
-        let nr = usize::from(interrupt.nr());
+    fn is_pending(interrupt: Interrupt) -> bool {
+        let nr = interrupt as usize;
 
         unsafe {
             (*Self::ptr()).clicints[nr]
@@ -258,8 +257,8 @@ impl EclicExt for ECLIC {
     }
 
     #[inline]
-    fn set_trigger_type<I: Nr>(interrupt: I, tt: TriggerType) {
-        let nr = usize::from(interrupt.nr());
+    fn set_trigger_type(interrupt: Interrupt, tt: TriggerType) {
+        let nr = interrupt as usize;
 
         unsafe {
             (*Self::ptr()).clicints[nr]
@@ -269,8 +268,8 @@ impl EclicExt for ECLIC {
     }
 
     #[inline]
-    fn get_trigger_type<I: Nr>(interrupt: I) -> Option<TriggerType> {
-        let nr = usize::from(interrupt.nr());
+    fn get_trigger_type(interrupt: Interrupt) -> Option<TriggerType> {
+        let nr = interrupt as usize;
 
         match unsafe { (*Self::ptr()).clicints[nr].clicintattr.read().trig().bits() } {
             0 => Some(TriggerType::Level),
@@ -281,8 +280,8 @@ impl EclicExt for ECLIC {
     }
 
     #[inline]
-    fn set_level<I: Nr>(interrupt: I, level: Level) {
-        let nr = usize::from(interrupt.nr());
+    fn set_level(interrupt: Interrupt, level: Level) {
+        let nr = interrupt as usize;
 
         let mut intctl = unsafe {
             (*Self::ptr()).clicints[nr]
@@ -307,8 +306,8 @@ impl EclicExt for ECLIC {
     }
 
     #[inline]
-    fn get_level<I: Nr>(interrupt: I) -> Level {
-        let nr = usize::from(interrupt.nr());
+    fn get_level(interrupt: Interrupt) -> Level {
+        let nr = interrupt as usize;
 
         let intctl = unsafe {
             (*Self::ptr()).clicints[nr]
@@ -325,8 +324,8 @@ impl EclicExt for ECLIC {
     }
 
     #[inline]
-    fn set_priority<I: Nr>(interrupt: I, priority: Priority) {
-        let nr = usize::from(interrupt.nr());
+    fn set_priority(interrupt: Interrupt, priority: Priority) {
+        let nr = interrupt as usize;
 
         let mut intctl = unsafe {
             (*Self::ptr()).clicints[nr]
@@ -354,8 +353,8 @@ impl EclicExt for ECLIC {
     }
 
     #[inline]
-    fn get_priority<I: Nr>(interrupt: I) -> Priority {
-        let nr = usize::from(interrupt.nr());
+    fn get_priority(interrupt: Interrupt) -> Priority {
+        let nr = interrupt as usize;
 
         let intctl = unsafe {
             (*Self::ptr()).clicints[nr]
