@@ -478,6 +478,9 @@ macro_rules! hal {
                 type Error = NbError<Error>;
 
                 fn read(&mut self, addr: u8, buffer: &mut [u8]) -> Result<(), Self::Error> {
+                    if buffer.len() == 2 {
+                        self.nb.i2c.ctl0.modify(|_, w| w.poap().set_bit());
+                    }
                     self.send_start_and_wait()?;
                     self.send_addr_and_wait(addr, true)?;
 
@@ -495,19 +498,19 @@ macro_rules! hal {
                             self.nb.i2c.ctl0.modify(|_, w| w.acken().set_bit());
                         }
                         2 => {
-                            self.nb.i2c.ctl0.modify(|_, w| w.pecen().set_bit().acken().set_bit());
+                            self.nb.i2c.ctl0.modify(|_, w| w.acken().clear_bit());
                             self.nb.i2c.stat0.read();
                             self.nb.i2c.stat1.read();
-                            self.nb.i2c.ctl0.modify(|_, w| w.acken().clear_bit());
 
                             busy_wait_cycles!(wait_for_flag!(self.nb.i2c, btc), self.data_timeout)?;
-                            self.nb.send_stop();
+                            busy_wait_cycles!(wait_for_flag!(self.nb.i2c, rbne), self.data_timeout)?;
                             buffer[0] = self.nb.i2c.data.read().trb().bits();
+                            busy_wait_cycles!(wait_for_flag!(self.nb.i2c, rbne), self.data_timeout)?;
                             buffer[1] = self.nb.i2c.data.read().trb().bits();
+                            self.nb.send_stop();
 
                             busy_wait_cycles!(self.nb.wait_for_stop(), self.data_timeout)?;
-                            self.nb.i2c.ctl0.modify(|_, w| w.pecen().clear_bit().acken().clear_bit());
-                            self.nb.i2c.ctl0.modify(|_, w| w.acken().set_bit());
+                            self.nb.i2c.ctl0.modify(|_, w| w.poap().clear_bit().acken().set_bit());
                         }
                         buffer_len => {
                             self.nb.i2c.ctl0.modify(|_, w| w.acken().set_bit());
