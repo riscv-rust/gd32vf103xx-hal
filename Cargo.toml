@@ -16,6 +16,8 @@ void = { version = "1.0.2", default-features = false }
 cast = { version = "0.2.3", default-features = false }
 vcell = "0.1.2"
 embedded-dma = "0.1.2"
+critical-section = "1.1.0"
+usb-device = "0.2.9"
 
 [dependencies.gd32vf103-pac]
 version = "0.5.0"
