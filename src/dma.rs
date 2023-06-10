@@ -27,8 +27,8 @@ pub enum Half {
 }
 
 pub enum Direction {
-    PeripherialToMemory,
-    MemoryToPeripherial,
+    PeripheralToMemory,
+    MemoryToPeripheral,
     MemoryToMemory,
 }
 
@@ -177,11 +177,11 @@ macro_rules! dma {
 
                         pub fn set_direction(&mut self, dir: Direction) {
                             match dir {
-                                Direction::PeripherialToMemory => {
+                                Direction::PeripheralToMemory => {
                                     self.ctl().modify(|_, w| w.m2m().clear_bit());
                                     self.ctl().modify(|_, w| w.dir().clear_bit())
                                 }
-                                Direction::MemoryToPeripherial => {
+                                Direction::MemoryToPeripheral => {
                                     self.ctl().modify(|_, w| w.m2m().clear_bit());
                                     self.ctl().modify(|_, w| w.dir().set_bit())
                                 }
