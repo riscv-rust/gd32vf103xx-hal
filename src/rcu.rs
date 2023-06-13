@@ -287,6 +287,8 @@ base_freq! {
     SPI0 => pclk2,
     SPI1 => pclk1,
     SPI2 => pclk1,
+    CAN0 => pclk1,
+    CAN1 => pclk1,
     TIMER0 => timer0,
     TIMER1 => timerx,
     TIMER2 => timerx,
