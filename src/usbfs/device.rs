@@ -9,7 +9,7 @@ use usb_device::{
     Result, UsbDirection, UsbError,
 };
 
-use crate::{delay::McycleDelay, rcu::Clocks};
+use crate::{delay::Delay, timer::Timer};
 
 use super::PortSpeed;
 
@@ -394,6 +394,11 @@ impl Endpoint {
     }
 }
 
+/// Convenience alias for the timer used for the USBFS peripheral.
+///
+/// The C/C++ implementation from Gigadevice uses TIMER2.
+pub type UsbTimer = Timer<gd32vf103_pac::TIMER2>;
+
 /// Inner implementation for the [`UsbBus`] struct.
 ///
 /// Separated from the main implementation for interior mutability.
@@ -403,7 +408,7 @@ pub struct UsbBusInner {
     usbfs_global: gd32vf103_pac::USBFS_GLOBAL,
     usbfs_device: gd32vf103_pac::USBFS_DEVICE,
     usbfs_pwrclk: gd32vf103_pac::USBFS_PWRCLK,
-    delay: McycleDelay,
+    delay: Delay<gd32vf103_pac::TIMER2>,
 }
 
 impl UsbBusInner {
@@ -412,7 +417,7 @@ impl UsbBusInner {
         usbfs_global: gd32vf103_pac::USBFS_GLOBAL,
         usbfs_device: gd32vf103_pac::USBFS_DEVICE,
         usbfs_pwrclk: gd32vf103_pac::USBFS_PWRCLK,
-        clocks: &Clocks,
+        timer: UsbTimer,
     ) -> Self {
         Self {
             in_endpoints: [None, None, None, None],
@@ -420,7 +425,7 @@ impl UsbBusInner {
             usbfs_global,
             usbfs_device,
             usbfs_pwrclk,
-            delay: McycleDelay::new(&clocks),
+            delay: Delay::<gd32vf103_pac::TIMER2>::new(timer),
         }
     }
 
@@ -1092,14 +1097,14 @@ impl UsbBus {
         usbfs_global: gd32vf103_pac::USBFS_GLOBAL,
         usbfs_device: gd32vf103_pac::USBFS_DEVICE,
         usbfs_pwrclk: gd32vf103_pac::USBFS_PWRCLK,
-        clocks: &Clocks,
+        timer: UsbTimer,
     ) -> Self {
         Self {
             inner: Mutex::new(RefCell::new(UsbBusInner::new(
                 usbfs_global,
                 usbfs_device,
                 usbfs_pwrclk,
-                clocks,
+                timer,
             ))),
         }
     }
