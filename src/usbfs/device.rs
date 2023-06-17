@@ -2,7 +2,7 @@
 
 use core::cell::RefCell;
 use critical_section::{self, Mutex};
-use embedded_hal::blocking::delay::DelayUs;
+use embedded_hal::blocking::delay::{DelayMs, DelayUs};
 use usb_device::{
     bus::{PollResult, UsbBus as UsbBusTrait},
     endpoint::{EndpointAddress, EndpointType},
@@ -504,10 +504,41 @@ impl UsbBusInner {
         }
     }
 
+    // Core initialization sequence from [usb_core_init](https://github.com/GigaDevice-Semiconductor/GD32VF103_Firmware_Library/blob/master/Firmware/GD32VF103_usbfs_library/driver/Source/drv_usb_core.c#L121)
+    fn init(&mut self) {
+        // disable USB global interrupt
+        self.usbfs_global
+            .gahbcs
+            .modify(|_, w| w.ginten().clear_bit());
+
+        // soft reset the core
+        self.force_reset();
+
+        // activate the transceiver
+        #[rustfmt::skip]
+        self.usbfs_global
+            .gccfg
+            .modify(|_, w| {
+                w.pwron().set_bit()
+                    .vbusacen().set_bit()
+                    .vbusbcen().set_bit()
+        });
+
+        // activate vbus sensing, if feature enabled
+        if cfg!(feature = "vbus_sensing") {
+            self.usbfs_global.gccfg.modify(|_, w| w.vbusig().set_bit());
+        }
+
+        // delay
+        self.delay.delay_ms(20u8);
+    }
+
     /// Enables and initializes the USBFS device.
     ///
     /// Initialization sequence taken from the [GD32VF103_Firmware_Library](https://github.com/GigaDevice-Semiconductor/GD32VF103_Firmware_Library).
     pub fn enable(&mut self) {
+        self.init();
+
         // force to peripheral mode
         self.usbfs_global
             .gusbcs
@@ -536,31 +567,24 @@ impl UsbBusInner {
 
         self.fifo_flush();
 
-        // clear all pending device interrupts
+        // clear all pending device interrupts (IN)
+        #[rustfmt::skip]
         self.usbfs_device.diepinten.write(|w| {
-            w.tfen()
-                .clear_bit()
-                .epdisen()
-                .clear_bit()
-                .citoen()
-                .clear_bit()
-                .eptxfuden()
-                .clear_bit()
-                .iepneen()
-                .clear_bit()
+            w.tfen().clear_bit()
+                .epdisen().clear_bit()
+                .citoen().clear_bit()
+                .eptxfuden().clear_bit()
+                .iepneen().clear_bit()
         });
 
+        // clear all pending device interrupts (OUT)
+        #[rustfmt::skip]
         self.usbfs_device.doepinten.write(|w| {
-            w.btbstpen()
-                .clear_bit()
-                .epdisen()
-                .clear_bit()
-                .eprxfovren()
-                .clear_bit()
-                .stpfen()
-                .clear_bit()
-                .tfen()
-                .clear_bit()
+            w.btbstpen().clear_bit()
+                .epdisen().clear_bit()
+                .eprxfovren().clear_bit()
+                .stpfen().clear_bit()
+                .tfen().clear_bit()
         });
 
         self.configure_endpoints();
@@ -683,21 +707,15 @@ impl UsbBusInner {
             .write(|w| w.wkupie().set_bit().spie().set_bit());
 
         // enable device_mode-related interrupts
+        #[rustfmt::skip]
         self.usbfs_global.ginten.modify(|_, w| {
-            w.rxfneie()
-                .set_bit()
-                .rstie()
-                .set_bit()
-                .enumfie()
-                .set_bit()
-                .iepie()
-                .set_bit()
-                .oepie()
-                .set_bit()
-                .sofie()
-                .set_bit()
-                .mfie()
-                .set_bit()
+            w.rxfneie().set_bit()
+                .rstie().set_bit()
+                .enumfie().set_bit()
+                .iepie().set_bit()
+                .oepie().set_bit()
+                .sofie().set_bit()
+                .mfie().set_bit()
         });
 
         if cfg!(feature = "vbus_sensing") {
@@ -1084,6 +1102,17 @@ impl UsbBusInner {
             PollResult::None
         }
     }
+
+    pub fn force_reset(&mut self) {
+        // enable core soft reset
+        self.usbfs_global.grstctl.modify(|_, w| w.csrst().set_bit());
+
+        // wait for the core to be soft reset
+        while self.usbfs_global.grstctl.read().csrst().bit_is_set() { /* nop */ }
+
+        // wait for an additional 3 PHY clocks
+        self.delay.delay_us(3u8);
+    }
 }
 
 /// [UsbBus](usb_device::bus::UsbBus) implementation for [gd32vf103xx](crate) devices.
@@ -1185,5 +1214,11 @@ impl UsbBusTrait for UsbBus {
 
     fn poll(&self) -> PollResult {
         critical_section::with(|cs| self.inner.borrow(cs).borrow().poll())
+    }
+
+    fn force_reset(&self) -> Result<()> {
+        critical_section::with(|cs| self.inner.borrow(cs).borrow_mut().force_reset());
+
+        Ok(())
     }
 }
