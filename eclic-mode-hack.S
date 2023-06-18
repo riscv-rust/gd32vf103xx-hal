@@ -22,6 +22,8 @@
 
 #define MSTATUS_MIE     0x00000008
 
+.option arch, +zicsr
+
 .macro DISABLE_MIE
   csrc CSR_MSTATUS, MSTATUS_MIE
 .endm

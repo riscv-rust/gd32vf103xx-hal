@@ -28,4 +28,5 @@ pub mod signature;
 pub mod spi;
 pub mod time;
 pub mod timer;
+pub mod usbfs;
 pub mod watchdog;

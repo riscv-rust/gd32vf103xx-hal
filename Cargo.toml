@@ -10,13 +10,18 @@ license = "ISC"
 edition = "2018"
 
 [dependencies]
-gd32vf103-pac = "0.4.0"
-riscv = "0.6.0"
+riscv = "0.10.1"
 nb = "0.1.2"
 void = { version = "1.0.2", default-features = false }
 cast = { version = "0.2.3", default-features = false }
 vcell = "0.1.2"
 embedded-dma = "0.1.2"
+critical-section = "1.1.0"
+usb-device = "0.2.9"
+
+[dependencies.gd32vf103-pac]
+version = "0.5.0"
+features = ["critical-section"]
 
 [dependencies.embedded-hal]
 version = "0.2.3"
