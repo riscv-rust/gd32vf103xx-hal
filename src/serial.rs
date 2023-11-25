@@ -31,6 +31,7 @@
 //! let received = block!(rx.read()).unwrap();
 //!  ```
 
+use core::cell::UnsafeCell;
 use core::marker::PhantomData;
 use core::ptr;
 
@@ -419,7 +420,7 @@ impl<USART: UsartX> crate::hal::serial::Write<u8> for Tx<USART> {
             // NOTE(unsafe) atomic write to stateless register
             // NOTE(write_volatile) 8-bit write that's not possible through the svd2rust API
             unsafe {
-                ptr::write_volatile(&(*USART::ptr()).data as *const _ as *mut _, byte)
+                ptr::write_volatile(UnsafeCell::raw_get(&(*USART::ptr()).data as *const _ as _), byte);
             }
             Ok(())
         } else {
