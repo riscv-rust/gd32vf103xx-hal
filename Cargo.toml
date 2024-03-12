@@ -18,9 +18,10 @@ cast = { version = "0.2.3", default-features = false }
 vcell = "0.1.2"
 embedded-dma = "0.1.2"
 
-[dependencies.embedded-hal]
-version = "0.2.3"
-features = ["unproven"]
+embedded-hal = { package = "embedded-hal", version = "1.0.0" }
+embedded-hal-02 = { package = "embedded-hal", version = "0.2.7", features = [
+    "unproven",
+] }
 
 [features]
 rt = ["gd32vf103-pac/rt"]

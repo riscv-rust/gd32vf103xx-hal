@@ -5,10 +5,10 @@ use core::sync::atomic::{self, Ordering};
 
 use crate::dma::{dma0::C0, CircBuffer, CircReadDma, Receive, RxDma, Transfer, TransferPayload, W};
 use crate::gpio::{gpioa, gpiob, gpioc, Analog};
+use crate::hal_02::adc::{Channel, OneShot};
 use crate::pac::{ADC0, ADC1};
 use crate::rcu::{BaseFrequency, Clocks, Enable, Rcu, Reset};
 use embedded_dma::StaticWriteBuffer;
-use embedded_hal::adc::{Channel, OneShot};
 
 #[doc(hidden)]
 pub trait AdcX {}
@@ -163,14 +163,14 @@ pub enum ETSRC_A {
 impl From<ETSRC_A> for u8 {
     fn from(src: ETSRC_A) -> u8 {
         match src {
-            ETSRC_A::TIM0CH0  => 0b000,
-            ETSRC_A::TIM0CH1  => 0b001,
-            ETSRC_A::TIM0CH2  => 0b010,
-            ETSRC_A::TIM1CH1  => 0b011,
+            ETSRC_A::TIM0CH0 => 0b000,
+            ETSRC_A::TIM0CH1 => 0b001,
+            ETSRC_A::TIM0CH2 => 0b010,
+            ETSRC_A::TIM1CH1 => 0b011,
             ETSRC_A::TIM2TRGO => 0b100,
-            ETSRC_A::TIM3CH3  => 0b101,
-            ETSRC_A::EXTI11   => 0b110,
-            ETSRC_A::SWRCST   => 0b111,
+            ETSRC_A::TIM3CH3 => 0b101,
+            ETSRC_A::EXTI11 => 0b110,
+            ETSRC_A::SWRCST => 0b111,
         }
     }
 }
@@ -615,28 +615,52 @@ impl Adc<ADC0> {
         self.rb.ctl0.modify(|_, w| w.disrc().clear_bit());
         self.rb.ctl1.modify(|_, w| w.dal().bit(self.align.into()));
         self.set_channel_sample_time(PIN::channel(), self.sample_time);
-        self.rb.rsq2.modify(|_, w| unsafe { w.rsq0().bits(PIN::channel()) });
+        self.rb
+            .rsq2
+            .modify(|_, w| unsafe { w.rsq0().bits(PIN::channel()) });
         self.rb.ctl1.modify(|_, w| w.dma().set_bit());
 
-        RxDma { payload: AdcPayload { adc: self, pins, _mode: PhantomData }, channel: dma_ch }
+        RxDma {
+            payload: AdcPayload {
+                adc: self,
+                pins,
+                _mode: PhantomData,
+            },
+            channel: dma_ch,
+        }
     }
 
     pub fn with_scan_dma<PINS>(mut self, pins: PINS, dma_ch: C0) -> AdcDma<PINS, Scan>
     where
         Self: SetChannels<PINS>,
     {
-        self.rb.ctl1.modify(|_, w| w
-            .adcon().clear_bit()
-            .dma().clear_bit()
-            .ctn().clear_bit()
-            .dal().bit(self.align.into())
-        );
-        self.rb.ctl0.modify(|_, w| w.sm().set_bit().disrc().clear_bit());
+        self.rb.ctl1.modify(|_, w| {
+            w.adcon()
+                .clear_bit()
+                .dma()
+                .clear_bit()
+                .ctn()
+                .clear_bit()
+                .dal()
+                .bit(self.align.into())
+        });
+        self.rb
+            .ctl0
+            .modify(|_, w| w.sm().set_bit().disrc().clear_bit());
         self.set_samples();
         self.set_sequence();
-        self.rb.ctl1.modify(|_, w| w.dma().set_bit().adcon().set_bit());
+        self.rb
+            .ctl1
+            .modify(|_, w| w.dma().set_bit().adcon().set_bit());
 
-        RxDma { payload: AdcPayload { adc: self, pins, _mode: PhantomData }, channel: dma_ch }
+        RxDma {
+            payload: AdcPayload {
+                adc: self,
+                pins,
+                _mode: PhantomData,
+            },
+            channel: dma_ch,
+        }
     }
 }
 
@@ -657,7 +681,7 @@ where
 
 impl<PINS> AdcDma<PINS, Scan>
 where
-    Self: TransferPayload
+    Self: TransferPayload,
 {
     pub fn split(mut self) -> (Adc<ADC0>, PINS, C0) {
         self.stop();
@@ -682,19 +706,26 @@ where
         // the transfer
         let (ptr, len) = unsafe { buffer.static_write_buffer() };
         unsafe {
-            self.channel.set_peripheral_address(&(*ADC0::ptr()).rdata as *const _ as u32, false);
+            self.channel
+                .set_peripheral_address(&(*ADC0::ptr()).rdata as *const _ as u32, false);
             self.channel.set_memory_address(ptr as u32, true);
         }
         self.channel.set_transfer_length(len);
 
         atomic::compiler_fence(Ordering::Release);
-        self.channel.ctl().modify(|_, w| unsafe { w
-            .m2m().clear_bit()
-            .prio().bits(0b01)   // Medium
-            .mwidth().bits(0b01) // 16 bits
-            .pwidth().bits(0b01) // 16 bits
-            .cmen().set_bit()
-            .dir().clear_bit()
+        self.channel.ctl().modify(|_, w| unsafe {
+            w.m2m()
+                .clear_bit()
+                .prio()
+                .bits(0b01) // Medium
+                .mwidth()
+                .bits(0b01) // 16 bits
+                .pwidth()
+                .bits(0b01) // 16 bits
+                .cmen()
+                .set_bit()
+                .dir()
+                .clear_bit()
         });
         self.start();
 
@@ -712,19 +743,26 @@ where
         // until the end of the transfer.
         let (ptr, len) = unsafe { buffer.static_write_buffer() };
         unsafe {
-            self.channel.set_peripheral_address(&(*ADC0::ptr()).rdata as *const _ as u32, false);
+            self.channel
+                .set_peripheral_address(&(*ADC0::ptr()).rdata as *const _ as u32, false);
             self.channel.set_memory_address(ptr as u32, true);
         }
         self.channel.set_transfer_length(len);
 
         atomic::compiler_fence(Ordering::Release);
-        self.channel.ctl().modify(|_, w| unsafe { w
-            .m2m().clear_bit()
-            .prio().bits(0b01)   // Medium
-            .mwidth().bits(0b01) // 16 bits
-            .pwidth().bits(0b01) // 16 bits
-            .cmen().clear_bit()
-            .dir().clear_bit()
+        self.channel.ctl().modify(|_, w| unsafe {
+            w.m2m()
+                .clear_bit()
+                .prio()
+                .bits(0b01) // Medium
+                .mwidth()
+                .bits(0b01) // 16 bits
+                .pwidth()
+                .bits(0b01) // 16 bits
+                .cmen()
+                .clear_bit()
+                .dir()
+                .clear_bit()
         });
         self.start();
 

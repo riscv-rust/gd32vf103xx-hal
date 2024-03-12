@@ -3,7 +3,7 @@
 use crate::rcu::{BaseFrequency, Enable, Rcu, Reset};
 use crate::time::Hertz;
 
-use embedded_hal::timer::{CountDown, Periodic};
+use crate::hal_02::timer::{CountDown, Periodic};
 use gd32vf103_pac::{TIMER0, TIMER1, TIMER2, TIMER3, TIMER4, TIMER5, TIMER6};
 use void::Void;
 

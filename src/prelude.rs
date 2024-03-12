@@ -1,6 +1,6 @@
 //! Prelude
 
-pub use crate::hal::prelude::*;
+pub use crate::hal_02::prelude::*;
 
 pub use crate::afio::AfioExt as _gd32vf103xx_hal_afio_AfioExt;
 pub use crate::backup_domain::BkpExt as _gd32vf103xx_hal_backup_domain_BkpExt;

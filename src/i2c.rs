@@ -1,15 +1,15 @@
 //! Inter-Integrated Circuit (I2C) bus
 
+use crate::afio::{Afio, Remap};
 use crate::gpio::gpiob::{PB10, PB11, PB6, PB7, PB8, PB9};
 use crate::gpio::{Alternate, OpenDrain};
-use crate::hal::blocking::i2c::{Read, Write, WriteRead};
+use crate::hal_02::blocking::i2c::{Read, Write, WriteRead};
 use crate::pac::{I2C0, I2C1};
-use crate::rcu::{Rcu, Clocks, Enable, Reset, BaseFrequency};
+use crate::rcu::{BaseFrequency, Clocks, Enable, Rcu, Reset};
 use crate::time::Hertz;
-use crate::afio::{Afio, Remap};
-use riscv::register::mcycle;
 use nb::Error::{Other, WouldBlock};
 use nb::{Error as NbError, Result as NbResult};
+use riscv::register::mcycle;
 
 /// I2C error
 #[derive(Debug, Eq, PartialEq)]
@@ -47,7 +47,7 @@ pub enum Mode {
     FastPlus {
         frequency: Hertz,
         duty_cycle: DutyCycle,
-    }
+    },
 }
 
 impl Mode {
@@ -116,13 +116,7 @@ pub struct BlockingI2c<I2C, PINS> {
 
 impl<PINS> I2c<I2C0, PINS> {
     /// Creates a generic I2C0 object on pins PB6 and PB7 or PB8 and PB9 (if remapped)
-    pub fn i2c0(
-        i2c: I2C0,
-        pins: PINS,
-        afio: &mut Afio,
-        mode: Mode,
-        rcu: &mut Rcu,
-    ) -> Self
+    pub fn i2c0(i2c: I2C0, pins: PINS, afio: &mut Afio, mode: Mode, rcu: &mut Rcu) -> Self
     where
         PINS: Pins<I2C0>,
     {
@@ -163,12 +157,7 @@ impl<PINS> BlockingI2c<I2C0, PINS> {
 
 impl<PINS> I2c<I2C1, PINS> {
     /// Creates a generic I2C1 object on pins PB10 and PB11 using the embedded-hal `BlockingI2c` trait.
-    pub fn i2c1(
-        i2c: I2C1,
-        pins: PINS,
-        mode: Mode,
-        rcu: &mut Rcu,
-    ) -> Self
+    pub fn i2c1(i2c: I2C1, pins: PINS, mode: Mode, rcu: &mut Rcu) -> Self
     where
         PINS: Pins<I2C1>,
     {
@@ -265,10 +254,7 @@ macro_rules! busy_wait_cycles {
     ($nb_expr:expr, $cycles:expr) => {{
         let started = mcycle::read();
         let cycles = $cycles as usize;
-        busy_wait!(
-            $nb_expr,
-            mcycle::read().wrapping_sub(started) >= cycles
-        )
+        busy_wait!($nb_expr, mcycle::read().wrapping_sub(started) >= cycles)
     }};
 }
 

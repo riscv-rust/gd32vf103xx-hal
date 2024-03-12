@@ -1,8 +1,8 @@
 //! General Purpose Input / Output
 
+use crate::rcu::Rcu;
 use core::marker::PhantomData;
 use riscv::interrupt;
-use crate::rcu::Rcu;
 
 /// Extension trait to split a GPIO peripheral in independent pins and registers
 pub trait GpioExt {
@@ -97,9 +97,9 @@ impl PortMode {
     #[inline(always)]
     pub fn into_bits(self) -> u8 {
         match self {
-            PortMode::Input(conf)       => (conf as u8) | 0b00,
+            PortMode::Input(conf) => (conf as u8) | 0b00,
             PortMode::Output10Mhz(conf) => (conf as u8) | 0b01,
-            PortMode::Output2Mhz(conf)  => (conf as u8) | 0b10,
+            PortMode::Output2Mhz(conf) => (conf as u8) | 0b10,
             PortMode::Output50Mhz(conf) => (conf as u8) | 0b11,
         }
     }
@@ -119,13 +119,11 @@ trait PeripheralAccess {
 
         interrupt::free(|_| {
             if index < 8 {
-                regs.ctl0.modify(|r, w| unsafe {
-                    w.bits((r.bits() & mask) | value)
-                });
+                regs.ctl0
+                    .modify(|r, w| unsafe { w.bits((r.bits() & mask) | value) });
             } else {
-                regs.ctl1.modify(|r, w| unsafe {
-                    w.bits((r.bits() & mask) | value)
-                });
+                regs.ctl1
+                    .modify(|r, w| unsafe { w.bits((r.bits() & mask) | value) });
             }
         });
     }
@@ -179,7 +177,7 @@ macro_rules! gpio {
         pub mod $gpiox {
             use core::convert::Infallible;
             use core::marker::PhantomData;
-            use crate::hal::digital::v2::{OutputPin, InputPin, StatefulOutputPin, toggleable};
+            use crate::hal_02::digital::v2::{OutputPin, InputPin, StatefulOutputPin, toggleable};
             use crate::pac::$GPIOX;
             use crate::rcu::{Rcu, Enable, Reset};
             use super::{
@@ -507,7 +505,7 @@ macro_rules! gpio {
 macro_rules! impl_pxx {
     ($(($port:ident :: $pin:ident)),*) => {
         use core::convert::Infallible;
-        use embedded_hal::digital::v2::{InputPin, StatefulOutputPin, OutputPin};
+        use crate::hal_02::digital::v2::{InputPin, StatefulOutputPin, OutputPin};
 
         pub enum Pxx<MODE> {
             $(

@@ -1,6 +1,6 @@
 //! Pulse width modulation
 
-use embedded_hal::Pwm;
+use crate::hal_02::Pwm;
 use gd32vf103_pac::{TIMER0, TIMER1, TIMER2, TIMER3, TIMER4};
 
 use crate::afio::{Afio, Remap};
@@ -134,7 +134,7 @@ impl From<PartialRemap2> for u8 {
 /// use hal::rcu::RcuExt;
 /// use hal::afio::AfioExt;
 /// use hal::pwm::{PwmTimer, Channel, NoRemap};
-/// use embedded_hal::Pwm;
+/// use crate::hal_02::Pwm;
 ///
 /// // ...
 /// let dp = Peripherals::take().unwrap();
