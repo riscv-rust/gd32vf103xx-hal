@@ -29,6 +29,20 @@ pub enum Error {
     _Extensible,
 }
 
+impl crate::hal::i2c::Error for Error {
+    fn kind(&self) -> crate::hal::i2c::ErrorKind {
+        match self {
+            Error::Bus => crate::hal::i2c::ErrorKind::Bus,
+            Error::Arbitration => crate::hal::i2c::ErrorKind::ArbitrationLoss,
+            Error::Acknowledge => crate::hal::i2c::ErrorKind::NoAcknowledge(
+                embedded_hal::i2c::NoAcknowledgeSource::Unknown,
+            ),
+            Error::Overrun => crate::hal::i2c::ErrorKind::Overrun,
+            Error::_Extensible => crate::hal::i2c::ErrorKind::Other,
+        }
+    }
+}
+
 #[derive(Eq, PartialEq)]
 pub enum DutyCycle {
     Ratio2to1,
@@ -546,6 +560,33 @@ macro_rules! hal {
                     Ok(())
                 }
             }
+
+            impl<PINS> crate::hal::i2c::ErrorType for BlockingI2c<$I2CX, PINS> {
+                type Error = Error;
+            }
+
+            impl<PINS> crate::hal::i2c::I2c<crate::hal::i2c::SevenBitAddress> for BlockingI2c<$I2CX, PINS> {
+                fn transaction(&mut self, address: u8, operations: &mut [crate::hal::i2c::Operation<'_>]) -> Result<(), Self::Error> {
+                    use crate::hal::i2c::Operation;
+
+                    // TODO: Optimize, every byte is now send in its own transaction.
+                    // This should pack Reads and Writes into a single transaction.
+                    if let Some(mut prev_op) = operations.iter_mut().next() {
+                        let _ = match &mut prev_op {
+                            Operation::Read(buffer) => crate::hal_02::blocking::i2c::Read::read(self, address, *buffer),
+                            Operation::Write(buffer) => crate::hal_02::blocking::i2c::Write::write(self, address, buffer),
+                        };
+                    }
+                    Ok(())
+                }
+            }
+
+            // NOTE: No support for the TenBitAddress
+            // impl<PINS> crate::hal::i2c::I2c<crate::hal::i2c::TenBitAddress> for BlockingI2c<$I2CX, PINS> {
+            //     fn transaction(&mut self, address: u16, operations: &mut [crate::hal::i2c::Operation<'_>]) -> Result<(), Self::Error> {
+            //         // ...
+            //     }
+            // }
         )+
     }
 }
