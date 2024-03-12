@@ -295,6 +295,57 @@ macro_rules! gpio {
 
             pub type $PXx<MODE> = Pxx<MODE>;
 
+            // Start embedded-hal 1.0.0 implementations
+            impl<MODE> crate::hal::digital::ErrorType for Generic<Output<MODE>> {
+                type Error = Infallible;
+            }
+
+            impl<MODE> crate::hal::digital::ErrorType for Generic<Input<MODE>> {
+                type Error = Infallible;
+            }
+
+            impl<MODE> crate::hal::digital::OutputPin for Generic<Output<MODE>> {
+                fn set_high(&mut self) -> Result<(), Self::Error> {
+                    $GPIOX::set_bit(self.i);
+                    Ok(())
+                }
+
+                fn set_low(&mut self) -> Result<(), Self::Error> {
+                    $GPIOX::clear_bit(self.i);
+                    Ok(())
+                }
+            }
+
+            impl<MODE> crate::hal::digital::InputPin for Generic<Input<MODE>> {
+                fn is_high(&mut self) -> Result<bool, Self::Error> {
+                    Ok($GPIOX::is_high(self.i))
+                }
+
+                fn is_low(&mut self) -> Result<bool, Self::Error> {
+                    Ok(!$GPIOX::is_high(self.i))
+                }
+            }
+
+            impl<MODE> crate::hal::digital::StatefulOutputPin for Generic<Output<MODE>> {
+                fn is_set_high(&mut self) -> Result<bool, Self::Error> {
+                    Ok($GPIOX::is_set_high(self.i))
+                }
+
+                fn is_set_low(&mut self) -> Result<bool, Self::Error> {
+                    Ok(!$GPIOX::is_set_high(self.i))
+                }
+            }
+
+            impl crate::hal::digital::InputPin for Generic<Output<OpenDrain>> {
+                fn is_high(&mut self) -> Result<bool, Self::Error> {
+                    Ok($GPIOX::is_high(self.i))
+                }
+
+                fn is_low(&mut self) -> Result<bool, Self::Error> {
+                    Ok(!$GPIOX::is_high(self.i))
+                }
+            }
+            // Stop embedded-hal 1.0.0 implementations
 
 
             $(
@@ -497,6 +548,58 @@ macro_rules! gpio {
                         Ok(!$GPIOX::is_high($i))
                     }
                 }
+
+                // Start embedded-hal 1.0.0 implementations
+                impl<MODE> crate::hal::digital::ErrorType for $PXi<Output<MODE>> {
+                    type Error = Infallible;
+                }
+
+                impl<MODE> crate::hal::digital::ErrorType for $PXi<Input<MODE>> {
+                    type Error = Infallible;
+                }
+
+                impl<MODE> crate::hal::digital::OutputPin for $PXi<Output<MODE>> {
+                    fn set_high(&mut self) -> Result<(), Self::Error> {
+                        $GPIOX::set_bit($i);
+                        Ok(())
+                    }
+
+                    fn set_low(&mut self) -> Result<(), Self::Error> {
+                        $GPIOX::clear_bit($i);
+                        Ok(())
+                    }
+                }
+
+                impl<MODE> crate::hal::digital::StatefulOutputPin for $PXi<Output<MODE>> {
+                    fn is_set_high(&mut self) -> Result<bool, Self::Error> {
+                        Ok($GPIOX::is_set_high($i))
+                    }
+
+                    fn is_set_low(&mut self) -> Result<bool, Self::Error> {
+                        Ok(!$GPIOX::is_set_high($i))
+                    }
+                }
+
+                impl<MODE> crate::hal::digital::InputPin for $PXi<Input<MODE>> {
+                    fn is_high(&mut self) -> Result<bool, Self::Error> {
+                        Ok($GPIOX::is_high($i))
+                    }
+
+                    fn is_low(&mut self) -> Result<bool, Self::Error> {
+                        Ok(!$GPIOX::is_high($i))
+                    }
+                }
+
+                impl crate::hal::digital::InputPin for $PXi<Output<OpenDrain>> {
+                    fn is_high(&mut self) -> Result<bool, Self::Error> {
+                        Ok($GPIOX::is_high($i))
+                    }
+
+                    fn is_low(&mut self) -> Result<bool, Self::Error> {
+                        Ok(!$GPIOX::is_high($i))
+                    }
+                }
+                // Stop embedded-hal 1.0.0 implementations
             )+
         }
     }
@@ -564,6 +667,58 @@ macro_rules! impl_pxx {
                 }
             }
         }
+
+        // Start embedded-hal 1.0.0 implementations
+        impl<MODE> crate::hal::digital::ErrorType for Pxx<Output<MODE>> {
+            type Error = Infallible;
+        }
+
+        impl<MODE> crate::hal::digital::ErrorType for Pxx<Input<MODE>> {
+            type Error = Infallible;
+        }
+
+        impl<MODE> crate::hal::digital::OutputPin for Pxx<Output<MODE>> {
+            fn set_high(&mut self) -> Result<(), Self::Error> {
+                match self {
+                    $(Pxx::$pin(pin) => crate::hal::digital::OutputPin::set_high(pin)),*
+                }
+            }
+
+            fn set_low(&mut self) -> Result<(), Self::Error> {
+                match self {
+                    $(Pxx::$pin(pin) => crate::hal::digital::OutputPin::set_low(pin)),*
+                }
+            }
+        }
+
+        impl<MODE> crate::hal::digital::StatefulOutputPin for Pxx<Output<MODE>> {
+            fn is_set_high(&mut self) -> Result<bool, Self::Error> {
+                match self {
+                    $(Pxx::$pin(pin) => pin.is_set_high()),*
+                }
+            }
+
+            fn is_set_low(&mut self) -> Result<bool, Self::Error> {
+                match self {
+                    $(Pxx::$pin(pin) => pin.is_set_low()),*
+                }
+            }
+        }
+
+        impl<MODE> crate::hal::digital::InputPin for Pxx<Input<MODE>> {
+            fn is_high(&mut self) -> Result<bool, Self::Error> {
+                match self {
+                    $(Pxx::$pin(pin) => pin.is_high()),*
+                }
+            }
+
+            fn is_low(&mut self) -> Result<bool, Self::Error> {
+                match self {
+                    $(Pxx::$pin(pin) => pin.is_low()),*
+                }
+            }
+        }
+        // Stop embedded-hal 1.0.0 implementations
     }
 }
 
