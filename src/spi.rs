@@ -25,6 +25,17 @@ pub enum Error {
     _Extensible,
 }
 
+impl crate::hal::spi::Error for Error {
+    fn kind(&self) -> crate::hal::spi::ErrorKind {
+        match self {
+            Error::Overrun => crate::hal::spi::ErrorKind::Overrun,
+            Error::ModeFault => crate::hal::spi::ErrorKind::ModeFault,
+            Error::Crc => crate::hal::spi::ErrorKind::Other,
+            Error::_Extensible => crate::hal::spi::ErrorKind::Other,
+        }
+    }
+}
+
 #[doc(hidden)]
 pub trait SpiX: Deref<Target = spi0::RegisterBlock> {}
 impl SpiX for SPI0 {}
@@ -226,3 +237,53 @@ impl<SPI: SpiX, PINS> crate::hal_02::spi::FullDuplex<u8> for Spi<SPI, PINS> {
 impl<SPI: SpiX, PINS> crate::hal_02::blocking::spi::transfer::Default<u8> for Spi<SPI, PINS> {}
 
 impl<SPI: SpiX, PINS> crate::hal_02::blocking::spi::write::Default<u8> for Spi<SPI, PINS> {}
+
+impl<SPI: SpiX, PINS> crate::hal::spi::ErrorType for Spi<SPI, PINS> {
+    type Error = Error;
+}
+
+// NOTE: All embedded-hal 1.0.0 functions are blocking.
+// Maybe add a small FIFO buffer to the Spi struct?
+impl<SPI: SpiX, PINS> crate::hal::spi::SpiBus<u8> for Spi<SPI, PINS> {
+    fn read(&mut self, words: &mut [u8]) -> Result<(), Self::Error> {
+        for word in words {
+            nb::block!(crate::hal_02::spi::FullDuplex::send(self, u8::default()))?;
+            *word = nb::block!(crate::hal_02::spi::FullDuplex::read(self))?;
+        }
+
+        Ok(())
+    }
+
+    fn write(&mut self, words: &[u8]) -> Result<(), Self::Error> {
+        for word in words {
+            nb::block!(crate::hal_02::spi::FullDuplex::send(self, *word))?;
+            nb::block!(crate::hal_02::spi::FullDuplex::read(self))?;
+        }
+
+        Ok(())
+    }
+
+    fn transfer(&mut self, read: &mut [u8], write: &[u8]) -> Result<(), Self::Error> {
+        assert_eq!(write.len(), read.len());
+
+        for (d, b) in write.iter().cloned().zip(read.iter_mut()) {
+            nb::block!(crate::hal_02::spi::FullDuplex::send(self, d))?;
+            *b = nb::block!(crate::hal_02::spi::FullDuplex::read(self))?;
+        }
+
+        Ok(())
+    }
+
+    fn transfer_in_place(&mut self, words: &mut [u8]) -> Result<(), Self::Error> {
+        for word in words {
+            nb::block!(crate::hal_02::spi::FullDuplex::send(self, *word))?;
+            *word = nb::block!(crate::hal_02::spi::FullDuplex::read(self))?;
+        }
+
+        Ok(())
+    }
+
+    fn flush(&mut self) -> Result<(), Self::Error> {
+        Ok(())
+    }
+}
