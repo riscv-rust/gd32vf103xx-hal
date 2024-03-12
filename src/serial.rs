@@ -31,16 +31,17 @@
 //! let received = block!(rx.read()).unwrap();
 //!  ```
 
+use core::cell::UnsafeCell;
 use core::marker::PhantomData;
 use core::ptr;
 
-use nb;
+use crate::hal_02::serial::Write;
 use core::convert::Infallible;
-use embedded_hal::serial::Write;
+use nb;
 
-use crate::rcu::Rcu;
-use crate::time::{U32Ext, Bps};
 use crate::afio::Afio;
+use crate::rcu::Rcu;
+use crate::time::{Bps, U32Ext};
 
 /// Interrupt event
 pub enum Event {
@@ -66,17 +67,19 @@ pub enum Error {
 }
 
 mod closed_traits {
-    use gd32vf103_pac::{USART0, USART1, USART2, usart0::RegisterBlock};
-    use core::ops::Deref;
-    use crate::rcu::{Enable, Reset, BaseFrequency};
     use crate::afio::Remap;
-    use crate::gpio::{Alternate, Floating, Input, PushPull};
     use crate::gpio::gpioa::{PA10, PA2, PA3, PA9};
-    use crate::gpio::gpiob::{PB6, PB7, PB10, PB11};
+    use crate::gpio::gpiob::{PB10, PB11, PB6, PB7};
     use crate::gpio::gpioc::{PC10, PC11};
     use crate::gpio::gpiod::{PD5, PD6, PD8, PD9};
+    use crate::gpio::{Alternate, Floating, Input, PushPull};
+    use crate::rcu::{BaseFrequency, Enable, Reset};
+    use core::ops::Deref;
+    use gd32vf103_pac::{usart0::RegisterBlock, USART0, USART1, USART2};
 
-    pub trait UsartX : Deref<Target=RegisterBlock> + Enable + Reset + BaseFrequency + Remap {
+    pub trait UsartX:
+        Deref<Target = RegisterBlock> + Enable + Reset + BaseFrequency + Remap
+    {
         fn ptr() -> *const RegisterBlock;
     }
 
@@ -92,7 +95,7 @@ mod closed_traits {
             impl<TM, RM> crate::serial::Pins<$usart> for ($tx<TM>, $rx<RM>)
             where
                 TM: crate::gpio::Active,
-                RM: crate::gpio::Active
+                RM: crate::gpio::Active,
             {
                 const REMAP: $remap_type = $remap_value;
                 type Tx = $tx<Alternate<PushPull>>;
@@ -105,7 +108,7 @@ mod closed_traits {
                     (tx, rx)
                 }
             }
-        }
+        };
     }
 
     impl UsartX for USART0 {
@@ -140,7 +143,6 @@ mod closed_traits {
     pins!(USART2, u8, 0b11, PD8, PD9);
 }
 use closed_traits::*;
-
 
 pub enum Parity {
     ParityNone,
@@ -220,8 +222,7 @@ pub struct Tx<USART> {
     _usart: PhantomData<USART>,
 }
 
-impl<USART: UsartX, TX, RX> Serial<USART, TX, RX>
-{
+impl<USART: UsartX, TX, RX> Serial<USART, TX, RX> {
     /// Configures the serial interface and creates the interface
     /// struct.
     ///
@@ -242,9 +243,10 @@ impl<USART: UsartX, TX, RX> Serial<USART, TX, RX>
         pins: PINS,
         config: Config,
         afio: &mut Afio,
-        rcu: &mut Rcu
+        rcu: &mut Rcu,
     ) -> Self
-    where PINS: Pins<USART, Tx=TX, Rx=RX>
+    where
+        PINS: Pins<USART, Tx = TX, Rx = RX>,
     {
         // enable and reset USART
         USART::enable(rcu);
@@ -288,9 +290,9 @@ impl<USART: UsartX, TX, RX> Serial<USART, TX, RX>
             StopBits::STOP2 => 0b10,
             StopBits::STOP1P5 => 0b11,
         };
-        usart.ctl1.modify(|_r, w| unsafe {
-            w.stb().bits(stop_bits)
-        });
+        usart
+            .ctl1
+            .modify(|_r, w| unsafe { w.stb().bits(stop_bits) });
 
         // UE: enable USART
         // RE: enable receiver
@@ -363,7 +365,7 @@ impl<USART: UsartX> Rx<USART> {
     }
 }
 
-impl<USART: UsartX> crate::hal::serial::Read<u8> for Rx<USART> {
+impl<USART: UsartX> crate::hal_02::serial::Read<u8> for Rx<USART> {
     type Error = Error;
 
     fn read(&mut self) -> nb::Result<u8, Error> {
@@ -398,9 +400,7 @@ impl<USART: UsartX> crate::hal::serial::Read<u8> for Rx<USART> {
             if sr.rbne().bit_is_set() {
                 // Read the received byte
                 // NOTE(read_volatile) see `write_volatile` below
-                Ok(unsafe {
-                    ptr::read_volatile(&(*USART::ptr()).data as *const _ as *const _)
-                })
+                Ok(unsafe { ptr::read_volatile(&(*USART::ptr()).data as *const _ as *const _) })
             } else {
                 Err(nb::Error::WouldBlock)
             }
@@ -408,7 +408,7 @@ impl<USART: UsartX> crate::hal::serial::Read<u8> for Rx<USART> {
     }
 }
 
-impl<USART: UsartX> crate::hal::serial::Write<u8> for Tx<USART> {
+impl<USART: UsartX> crate::hal_02::serial::Write<u8> for Tx<USART> {
     type Error = Infallible;
 
     fn write(&mut self, byte: u8) -> nb::Result<(), Self::Error> {
@@ -419,7 +419,8 @@ impl<USART: UsartX> crate::hal::serial::Write<u8> for Tx<USART> {
             // NOTE(unsafe) atomic write to stateless register
             // NOTE(write_volatile) 8-bit write that's not possible through the svd2rust API
             unsafe {
-                ptr::write_volatile(&(*USART::ptr()).data as *const _ as *mut _, byte)
+                let data = &(*USART::ptr()).data as *const _ as *const UnsafeCell<u8>;
+                ptr::write_volatile(UnsafeCell::raw_get(data), byte)
             }
             Ok(())
         } else {
@@ -441,7 +442,7 @@ impl<USART: UsartX> crate::hal::serial::Write<u8> for Tx<USART> {
 
 impl<USART> core::fmt::Write for Tx<USART>
 where
-    Tx<USART>: embedded_hal::serial::Write<u8>,
+    Tx<USART>: crate::hal_02::serial::Write<u8>,
 {
     fn write_str(&mut self, s: &str) -> core::fmt::Result {
         s.as_bytes()

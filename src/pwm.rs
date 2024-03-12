@@ -1,6 +1,6 @@
 //! Pulse width modulation
 
-use embedded_hal::Pwm;
+use crate::hal_02::Pwm;
 use gd32vf103_pac::{TIMER0, TIMER1, TIMER2, TIMER3, TIMER4};
 
 use crate::afio::{Afio, Remap};
@@ -134,7 +134,7 @@ impl From<PartialRemap2> for u8 {
 /// use hal::rcu::RcuExt;
 /// use hal::afio::AfioExt;
 /// use hal::pwm::{PwmTimer, Channel, NoRemap};
-/// use embedded_hal::Pwm;
+/// use crate::hal_02::Pwm;
 ///
 /// // ...
 /// let dp = Peripherals::take().unwrap();
@@ -309,30 +309,55 @@ macro_rules! pwm_timer {
                 self.timer.chctl0_output().modify(|_r, w| unsafe {
                     w
                         // Enable PWM Mode 0 for channel 0 and 1
-                        .ch0comctl().bits(0b110)
-                        .ch1comctl().bits(0b110)
-
+                        .ch0comctl()
+                        .bits(0b110)
+                        .ch1comctl()
+                        .bits(0b110)
                         // Output mode for channel 0 and 1
-                        .ch0ms().bits(0b00)
-                        .ch1ms().bits(0b00)
+                        .ch0ms()
+                        .bits(0b00)
+                        .ch1ms()
+                        .bits(0b00)
                 });
                 self.timer.chctl1_output().modify(|_r, w| unsafe {
                     w
                         // Enable PWM Mode 0 for channel 2 and 3
-                        .ch2comctl().bits(0b110)
-                        .ch3comctl().bits(0b110)
-
+                        .ch2comctl()
+                        .bits(0b110)
+                        .ch3comctl()
+                        .bits(0b110)
                         // Output mode for channel 2 and 3
-                        .ch2ms().bits(0b00)
-                        .ch3ms().bits(0b00)
+                        .ch2ms()
+                        .bits(0b00)
+                        .ch3ms()
+                        .bits(0b00)
                 });
 
                 // Enable the timer
-                self.timer.ctl0.write(|w| {
-                    w
-                        .updis().clear_bit()
-                        .cen().set_bit()
-                });
+                self.timer
+                    .ctl0
+                    .write(|w| w.updis().clear_bit().cen().set_bit());
+            }
+        }
+
+        impl<REMAP> crate::hal::pwm::ErrorType for PwmTimer<$TIM, REMAP> {
+            type Error = core::convert::Infallible;
+        }
+
+        impl<REMAP> crate::hal::pwm::SetDutyCycle for PwmTimer<$TIM, REMAP> {
+            fn max_duty_cycle(&self) -> u16 {
+                self.max_duty_cycle
+            }
+
+            // NOTE: The structure of the PwnTimer struct does not lend itself well
+            // to the embedded-hal 1.0.0 trait. Users of this trait will, for now, be
+            // limmited to using only Channel::CH0, until we put the channel into the
+            // type defiinition.
+            fn set_duty_cycle(
+                &mut self,
+                duty: u16,
+            ) -> Result<(), <Self as crate::hal::pwm::ErrorType>::Error> {
+                Ok(self.set_duty(Channel::CH0, duty))
             }
         }
     };
