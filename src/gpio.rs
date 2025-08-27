@@ -117,7 +117,7 @@ trait PeripheralAccess {
         let value = (bits as u32) << offset;
         let regs = Self::peripheral();
 
-        interrupt::free(|_| {
+        interrupt::free(|| {
             if index < 8 {
                 regs.ctl0.modify(|r, w| unsafe {
                     w.bits((r.bits() & mask) | value)
