@@ -8,9 +8,14 @@ name: CI
 jobs:
   ci-linux:
     runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.experimental || false }}
     strategy:
       matrix:
         rust: [stable, nightly]
+        include:
+          # Nightly is only for reference and allowed to fail
+          - rust: nightly
+            experimental: true
         target: [x86_64-unknown-linux-gnu, riscv32imac-unknown-none-elf]
     steps:
       - uses: actions/checkout@v2
