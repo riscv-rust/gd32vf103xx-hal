@@ -27,8 +27,14 @@ impl ExtiLine {
     ///
     /// A line from gpio can be obtained through its `pin_number()` method
     /// ```no_run
-    /// extiline = ExtiLine::from_gpio_line(some_pin.pin_number()).unwrap();
+    /// use gd32vf103xx_hal::exti::{ExtiLine, TriggerEdge};
+    /// # fn listen_pin(
+    /// #   some_pin: gd32vf103xx_hal::gpio::gpioa::Generic<()>,
+    /// #   mut exti: gd32vf103xx_hal::exti::Exti,
+    /// # ) {
+    /// let extiline = ExtiLine::from_gpio_line(some_pin.pin_number()).unwrap();
     /// exti.listen(extiline, TriggerEdge::Falling);
+    /// # }
     /// ```
     pub fn from_gpio_line(line: u8) -> Option<Self> {
         match line {
