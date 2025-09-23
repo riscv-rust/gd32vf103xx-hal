@@ -12,7 +12,7 @@
 
 use crate::pac::{RCU, RTC};
 
-use crate::backup_domain::BackupDomain;
+use crate::backup_domain::{BackupDomain, Lxtal};
 use crate::time::Hertz;
 
 use core::convert::Infallible;
@@ -24,16 +24,19 @@ const LXTAL_HERTZ: u32 = 32_768;
 */
 pub struct Rtc {
     regs: RTC,
+    /// ensure that LXTAL is configured as long as RTC exists
+    #[allow(dead_code)]
+    lxtal: Lxtal,
 }
 
 impl Rtc {
     /**
       Initialises the RTC.
     */
-    pub fn rtc(regs: RTC, bkp: &mut BackupDomain) -> Self {
-        let mut result = Rtc { regs };
+    pub fn rtc(regs: RTC, bkp: &mut BackupDomain, lxtal: Lxtal) -> Self {
+        let mut result = Rtc { regs, lxtal };
 
-        Rtc::enable_rtc(bkp);
+        Rtc::enable_rtc(bkp, &lxtal);
 
         // Set the prescaler to make it count up once every second.
         let prl = LXTAL_HERTZ - 1;
@@ -46,17 +49,10 @@ impl Rtc {
         result
     }
 
-    /// Enables the RTC device with the LXTAL as the clock
-    fn enable_rtc(_bkp: &mut BackupDomain) {
+    /// Enables the RTC device with the LXTAL as the clock.
+    /// This setting is reset only when the backup domain is reset.
+    fn enable_rtc(_bkp: &mut BackupDomain, _lxtal: &Lxtal) {
         let rcu = unsafe { &*RCU::ptr() };
-
-        // Enable LXTAL
-        rcu.bdctl
-            .modify(|_, w| w.lxtalen().set_bit().lxtalbps().clear_bit());
-
-        // Wait for stable LXTAL
-        while !rcu.bdctl.read().lxtalstb().bit() {}
-
         rcu.bdctl.modify(|_, w| {
             unsafe {
                 w
@@ -70,7 +66,7 @@ impl Rtc {
         })
     }
 
-    /// Selects the frequency of the RTC Timer
+    /// Selects the frequency at which the RTC counter is updated.
     pub fn select_frequency(&mut self, timeout: impl Into<Hertz>) {
         let frequency = timeout.into().0;
 
@@ -143,7 +139,8 @@ impl Rtc {
         self.regs.cnth.read().bits() << 16 | self.regs.cntl.read().bits()
     }
 
-    /// Enables the RTC second interrupt
+    /// Enables the RTC second interrupt.
+    /// This interrupt triggers whenever the RTC counter increases.
     pub fn listen_seconds(&mut self) {
         self.perform_write(|s| s.regs.inten.modify(|_, w| w.scie().set_bit()))
     }

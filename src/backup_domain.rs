@@ -9,7 +9,7 @@
   function.
 */
 
-use crate::pac::{BKP, PMU};
+use crate::pac::{rcu, BKP, PMU};
 use crate::rcu::{Rcu, Enable};
 
 /// Extension trait that sets up the `BKP` peripheral
@@ -38,4 +38,32 @@ impl BkpExt for BKP {
 */
 pub struct BackupDomain {
     pub(crate) _regs: BKP,
+}
+
+/// This marks that the LXTAL clock source has been configured and has stabilized.
+#[derive(Clone, Copy)]
+pub struct Lxtal(
+    /// Non-public field to stop user from instantiating this type
+    (),
+);
+
+impl Lxtal {
+    /// Enable and don't wait for stabilization.
+    fn just_enable(rcu: &rcu::RegisterBlock) {
+        // Enable LXTAL
+        rcu.bdctl
+        .modify(|_, w| w.lxtalen().set_bit().lxtalbps().clear_bit());
+    }
+    fn is_stable(rcu: &rcu::RegisterBlock) -> bool {
+        rcu.bdctl.read().lxtalstb().bit()
+    }
+    /// Enable the clock and block until stabilized.
+    pub fn enable_block(rcu: &Rcu) -> Self {
+        //let rcu = unsafe { &*RCU::ptr() };
+        let rcu = &rcu.regs;
+        Self::just_enable(rcu);
+        // Wait for stable LXTAL
+        while !Self::is_stable(rcu) {}
+        Self(())
+    }
 }
