@@ -193,7 +193,7 @@ impl EclicExt for ECLIC {
     unsafe fn unmask<I: Nr>(interrupt: I) {
         let nr = usize::from(interrupt.nr());
 
-        (*Self::ptr()).clicints[nr]
+        unsafe { &*Self::ptr() }.clicints[nr]
             .clicintie
             .write(|w| w.ie().set_bit())
     }
