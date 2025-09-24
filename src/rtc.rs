@@ -178,10 +178,12 @@ impl Rtc {
 
       ```rust
       use nb::block;
-
-      rtc.set_alarm(rtc.current_time() + 5);
-      // NOTE: Safe unwrap because Infallible can't be returned
-      block!(rtc.wait_alarm()).unwrap();
+      use gd32vf103xx_hal::rtc::Rtc;
+      # fn set_alarm(mut rtc: Rtc) {
+        rtc.set_alarm(rtc.current_time() + 5);
+        // NOTE: Safe unwrap because Infallible can't be returned
+        block!(rtc.wait_alarm()).unwrap();
+      # }
       ```
     */
     pub fn wait_alarm(&mut self) -> nb::Result<(), Infallible> {

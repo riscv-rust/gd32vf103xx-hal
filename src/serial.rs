@@ -5,10 +5,18 @@
 //!
 //! ## Example usage:
 //!  ```rust
+//! use embedded_hal::serial::{Read, Write};
+//! use nb::block;
+//! use gd32vf103_pac as pac;
+//! use gd32vf103xx_hal::afio::AfioExt;
+//! use gd32vf103xx_hal::gpio::GpioExt;
+//! use gd32vf103xx_hal::serial::{Config, Serial};
+//! use gd32vf103xx_hal::time::U32Ext;
+//! # fn create_serial(mut rcu: gd32vf103xx_hal::rcu::Rcu) {
 //! // prelude: create handles to the peripherals and registers
-//! let p = crate::pac::Peripherals::take().unwrap();
+//! let p = pac::Peripherals::take().unwrap();
 //! let mut afio = p.AFIO.constrain(&mut rcu);
-//! let mut gpioa = p.GPIOA.split();
+//! let mut gpioa = p.GPIOA.split(&mut rcu);
 //!
 //! // USART0 on Pins A9 and A10
 //! let pin_tx = gpioa.pa9;
@@ -29,6 +37,7 @@
 //! block!(tx.write(b'R')).ok();
 //! // Receive a byte from the USART and store it in "received"
 //! let received = block!(rx.read()).unwrap();
+//! # }
 //!  ```
 
 use core::marker::PhantomData;
