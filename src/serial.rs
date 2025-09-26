@@ -267,12 +267,12 @@ impl<USART: UsartX, TX, RX> Serial<USART, TX, RX>
         USART::remap(afio, PINS::REMAP);
 
         // enable DMA transfers
-        usart.ctl2.write(|w| w.dent().set_bit().denr().set_bit());
+        usart.ctl2().write(|w| w.dent().set_bit().denr().set_bit());
 
         // Configure baud rate
         let brr = USART::base_frequency(rcu).0 / config.baudrate.0;
         assert!(brr >= 16, "impossible baud rate");
-        usart.baud.write(|w| unsafe { w.bits(brr) });
+        usart.baud().write(|w| unsafe { w.bits(brr) });
 
         // Configure parity and word length
         // Unlike most uart devices, the "word length" of this usart device refers to
@@ -284,7 +284,7 @@ impl<USART: UsartX, TX, RX> Serial<USART, TX, RX>
             Parity::ParityEven => (true, true, false),
             Parity::ParityOdd => (true, true, true),
         };
-        usart.ctl0.modify(|_r, w| {
+        usart.ctl0().modify(|_r, w| {
             w.wl().bit(word_length);
             w.pm().bit(parity);
             w.pcen().bit(parity_control_enable)
@@ -297,14 +297,14 @@ impl<USART: UsartX, TX, RX> Serial<USART, TX, RX>
             StopBits::STOP2 => 0b10,
             StopBits::STOP1P5 => 0b11,
         };
-        usart.ctl1.modify(|_r, w| unsafe {
+        usart.ctl1().modify(|_r, w| unsafe {
             w.stb().bits(stop_bits)
         });
 
         // UE: enable USART
         // RE: enable receiver
         // TE: enable transceiver
-        usart.ctl0.modify(|_r, w| {
+        usart.ctl0().modify(|_r, w| {
             w.uen().set_bit();
             w.ren().set_bit();
             w.ten().set_bit()
@@ -318,8 +318,8 @@ impl<USART: UsartX, TX, RX> Serial<USART, TX, RX>
     /// register empty (TXE)_ interrupt
     pub fn listen(&mut self, event: Event) {
         match event {
-            Event::Rxne => self.usart.ctl0.modify(|_, w| w.rbneie().set_bit()),
-            Event::Txe => self.usart.ctl0.modify(|_, w| w.tbeie().set_bit()),
+            Event::Rxne => self.usart.ctl0().modify(|_, w| w.rbneie().set_bit()),
+            Event::Txe => self.usart.ctl0().modify(|_, w| w.tbeie().set_bit()),
         }
     }
 
@@ -328,8 +328,8 @@ impl<USART: UsartX, TX, RX> Serial<USART, TX, RX>
     /// register empty (TXE)_ interrupt
     pub fn unlisten(&mut self, event: Event) {
         match event {
-            Event::Rxne => self.usart.ctl0.modify(|_, w| w.rbneie().clear_bit()),
-            Event::Txe => self.usart.ctl0.modify(|_, w| w.tbeie().clear_bit()),
+            Event::Rxne => self.usart.ctl0().modify(|_, w| w.rbneie().clear_bit()),
+            Event::Txe => self.usart.ctl0().modify(|_, w| w.tbeie().clear_bit()),
         }
     }
 
@@ -354,21 +354,21 @@ impl<USART: UsartX, TX, RX> Serial<USART, TX, RX>
 
 impl<USART: UsartX> Tx<USART> {
     pub fn listen(&mut self) {
-        unsafe { (*USART::ptr()).ctl0.modify(|_, w| w.tbeie().set_bit()) };
+        unsafe { (*USART::ptr()).ctl0().modify(|_, w| w.tbeie().set_bit()) };
     }
 
     pub fn unlisten(&mut self) {
-        unsafe { (*USART::ptr()).ctl0.modify(|_, w| w.tbeie().clear_bit()) };
+        unsafe { (*USART::ptr()).ctl0().modify(|_, w| w.tbeie().clear_bit()) };
     }
 }
 
 impl<USART: UsartX> Rx<USART> {
     pub fn listen(&mut self) {
-        unsafe { (*USART::ptr()).ctl0.modify(|_, w| w.rbneie().set_bit()) };
+        unsafe { (*USART::ptr()).ctl0().modify(|_, w| w.rbneie().set_bit()) };
     }
 
     pub fn unlisten(&mut self) {
-        unsafe { (*USART::ptr()).ctl0.modify(|_, w| w.rbneie().clear_bit()) };
+        unsafe { (*USART::ptr()).ctl0().modify(|_, w| w.rbneie().clear_bit()) };
     }
 }
 
@@ -377,7 +377,7 @@ impl<USART: UsartX> crate::hal::serial::Read<u8> for Rx<USART> {
 
     fn read(&mut self) -> nb::Result<u8, Error> {
         // NOTE(unsafe) atomic read with no side effects
-        let sr = unsafe { (*USART::ptr()).stat.read() };
+        let sr = unsafe { (*USART::ptr()).stat().read() };
 
         // Check for any errors
         let err = if sr.perr().bit_is_set() {
@@ -398,8 +398,8 @@ impl<USART: UsartX> crate::hal::serial::Read<u8> for Rx<USART> {
             // register
             // NOTE(read_volatile) see `write_volatile` below
             unsafe {
-                ptr::read_volatile(&(*USART::ptr()).stat as *const _ as *const _);
-                ptr::read_volatile(&(*USART::ptr()).data as *const _ as *const _);
+                ptr::read_volatile(&(*USART::ptr()).stat() as *const _ as *const _);
+                ptr::read_volatile(&(*USART::ptr()).data() as *const _ as *const _);
             }
             Err(nb::Error::Other(err))
         } else {
@@ -408,7 +408,7 @@ impl<USART: UsartX> crate::hal::serial::Read<u8> for Rx<USART> {
                 // Read the received byte
                 // NOTE(read_volatile) see `write_volatile` below
                 Ok(unsafe {
-                    ptr::read_volatile(&(*USART::ptr()).data as *const _ as *const _)
+                    ptr::read_volatile(&(*USART::ptr()).data() as *const _ as *const _)
                 })
             } else {
                 Err(nb::Error::WouldBlock)
@@ -422,14 +422,15 @@ impl<USART: UsartX> crate::hal::serial::Write<u8> for Tx<USART> {
 
     fn write(&mut self, byte: u8) -> nb::Result<(), Self::Error> {
         // NOTE(unsafe) atomic read with no side effects
-        let sr = unsafe { (*USART::ptr()).stat.read() };
+        let sr = unsafe { (*USART::ptr()).stat().read() };
 
         if sr.tbe().bit_is_set() {
             // NOTE(unsafe) atomic write to stateless register
             // NOTE(write_volatile) 8-bit write that's not possible through the svd2rust API
             unsafe {
                 let usart_mut = USART::ptr() as *mut USART::Target;
-                ptr::write_volatile(ptr::addr_of_mut!((*usart_mut).data) as *mut u8, byte);
+                let mut v = (*usart_mut).data();
+                ptr::write_volatile(ptr::addr_of_mut!(v) as *mut u8, byte);
             }
             Ok(())
         } else {
@@ -439,7 +440,7 @@ impl<USART: UsartX> crate::hal::serial::Write<u8> for Tx<USART> {
 
     fn flush(&mut self) -> nb::Result<(), Self::Error> {
         // NOTE(unsafe) atomic read with no side effects
-        let sr = unsafe { (*USART::ptr()).stat.read() };
+        let sr = unsafe { (*USART::ptr()).stat().read() };
 
         if sr.tc().bit_is_set() {
             Ok(())

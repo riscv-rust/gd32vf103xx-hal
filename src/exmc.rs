@@ -32,7 +32,7 @@ impl Exmc {
     pub fn new(regs: EXMC, pins: ExmcPins, conf: ExmcConfiguration, timing_conf: ExmcTimingConfiguration, rcu: &mut Rcu) -> Self {
         EXMC::enable(rcu);
 
-        regs.snctl0.write(|w| unsafe {
+        regs.snctl0().write(|w| unsafe {
             w.nrmux().bit(conf.address_data_mux_enabled);
             w.nrtp().bits(conf.memory_type as u8);
             w.nrw().bits(conf.databus_width as u8);
@@ -44,7 +44,7 @@ impl Exmc {
             w
         });
 
-        regs.sntcfg0.write(|w| unsafe {
+        regs.sntcfg0().write(|w| unsafe {
             w.aset().bits(timing_conf.address_setup_time);
             w.ahld().bits(timing_conf.address_hold_time);
             w.dset().bits(timing_conf.data_setup_time);
@@ -52,7 +52,7 @@ impl Exmc {
         });
 
         // Enable memory bank
-        regs.snctl0.modify(|_, w| w.nrbken().set_bit());
+        regs.snctl0().modify(|_, w| w.nrbken().set_bit());
 
         Exmc {
             regs,
@@ -62,7 +62,7 @@ impl Exmc {
 
     pub fn release(self) -> (EXMC, ExmcPins) {
         // Disable memory bank
-        self.regs.snctl0.modify(|_, w| w.nrbken().clear_bit());
+        self.regs.snctl0().modify(|_, w| w.nrbken().clear_bit());
 
         (self.regs, self.pins)
     }

@@ -41,25 +41,25 @@ macro_rules! hal {
                 /// Starts listening for an `event`
                 pub fn listen(&mut self, event: Event) {
                     match event {
-                        Event::Update => self.tim.dmainten.modify(|_, w| w.upie().set_bit()),
+                        Event::Update => self.tim.dmainten().modify(|_, w| w.upie().set_bit()),
                     }
                 }
 
                 /// Stops listening for an `event`
                 pub fn unlisten(&mut self, event: Event) {
                     match event {
-                        Event::Update => self.tim.dmainten.modify(|_, w| w.upie().clear_bit()),
+                        Event::Update => self.tim.dmainten().modify(|_, w| w.upie().clear_bit()),
                     }
                 }
 
                 /// Clears Update Interrupt Flag
                 pub fn clear_update_interrupt_flag(&mut self) {
-                    self.tim.intf.modify(|_, w| w.upif().clear_bit());
+                    self.tim.intf().modify(|_, w| w.upif().clear_bit());
                 }
 
                 /// Releases the TIMER peripheral
                 pub fn free(self) -> $TIM {
-                    self.tim.ctl0.modify(|_, w| w.cen().clear_bit());
+                    self.tim.ctl0().modify(|_, w| w.cen().clear_bit());
                     self.tim
                 }
             }
@@ -75,35 +75,35 @@ macro_rules! hal {
                 {
                     self.timeout = timeout.into();
 
-                    self.tim.ctl0.modify(|_, w| w.cen().clear_bit());
-                    self.tim.cnt.reset();
+                    self.tim.ctl0().modify(|_, w| w.cen().clear_bit());
+                    self.tim.cnt().reset();
 
                     let ticks = self.timer_clock.0 / self.timeout.0;
                     let psc = ((ticks - 1) / (1 << 16)) as u16;
                     let car = (ticks / ((psc + 1) as u32)) as u16;
-                    self.tim.psc.write(|w| unsafe { w.bits(psc) } );
-                    self.tim.car.write(|w| unsafe { w.bits(car) } );
+                    self.tim.psc().write(|w| unsafe { w.bits(psc) } );
+                    self.tim.car().write(|w| unsafe { w.bits(car) } );
 
                     // Set UPS=1 so an UPG will *not* trigger an interrupt
-                    self.tim.ctl0.modify(|_, w| w.ups().set_bit());
+                    self.tim.ctl0().modify(|_, w| w.ups().set_bit());
                     // Trigger an UPG to clear the timer counter register
                     // see user manual (v1.2) p.261 for details
-                    self.tim.swevg.write(|w| w.upg().set_bit());
+                    self.tim.swevg().write(|w| w.upg().set_bit());
 
                     // clear any outstanding UPIF flag to ensure a clear start
-                    self.tim.intf.modify(|_, w| w.upif().clear_bit());
+                    self.tim.intf().modify(|_, w| w.upif().clear_bit());
 
-                    self.tim.ctl0.write(|w| { w
+                    self.tim.ctl0().write(|w| { w
                         .updis().clear_bit()
                         .cen().set_bit()
                     });
                 }
 
                 fn wait(&mut self) -> nb::Result<(), Void> {
-                    if self.tim.intf.read().upif().bit_is_clear() {
+                    if self.tim.intf().read().upif().bit_is_clear() {
                         Err(nb::Error::WouldBlock)
                     } else {
-                        self.tim.intf.modify(|_r, w| w.upif().clear_bit());
+                        self.tim.intf().modify(|_r, w| w.upif().clear_bit());
                         Ok(())
                     }
                 }

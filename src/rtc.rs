@@ -42,8 +42,8 @@ impl Rtc {
         let prl = LXTAL_HERTZ - 1;
         assert!(prl < 1 << 20);
         result.perform_write(|s| {
-            s.regs.psch.write(|w| unsafe { w.bits(prl >> 16) });
-            s.regs.pscl.write(|w| unsafe { w.bits(prl as u16 as u32) });
+            s.regs.psch().write(|w| unsafe { w.bits(prl >> 16) });
+            s.regs.pscl().write(|w| unsafe { w.bits(prl as u16 as u32) });
         });
 
         result
@@ -53,7 +53,7 @@ impl Rtc {
     /// This setting is reset only when the backup domain is reset.
     fn enable_rtc(_bkp: &mut BackupDomain, _lxtal: &Lxtal) {
         let rcu = unsafe { &*RCU::ptr() };
-        rcu.bdctl.modify(|_, w| {
+        rcu.bdctl().modify(|_, w| {
             unsafe {
                 w
                     // Set the source of the RTC to LXTAL
@@ -74,9 +74,9 @@ impl Rtc {
 
         let prescaler = LXTAL_HERTZ / frequency - 1;
         self.perform_write(|s| {
-            s.regs.psch.write(|w| unsafe { w.bits(prescaler >> 16) });
+            s.regs.psch().write(|w| unsafe { w.bits(prescaler >> 16) });
             s.regs
-                .pscl
+                .pscl()
                 .write(|w| unsafe { w.bits(prescaler as u16 as u32) });
         });
     }
@@ -85,10 +85,10 @@ impl Rtc {
     pub fn set_time(&mut self, counter_value: u32) {
         self.perform_write(|s| {
             s.regs
-                .cnth
+                .cnth()
                 .write(|w| unsafe { w.bits(counter_value >> 16) });
             s.regs
-                .cntl
+                .cntl()
                 .write(|w| unsafe { w.bits(counter_value as u16 as u32) });
         });
     }
@@ -105,10 +105,10 @@ impl Rtc {
 
         self.perform_write(|s| {
             s.regs
-                .alrmh
+                .alrmh()
                 .write(|w| unsafe { w.alrm().bits((alarm_value >> 16) as u16) });
             s.regs
-                .alrml
+                .alrml()
                 .write(|w| unsafe { w.alrm().bits(alarm_value as u16) });
         });
 
@@ -119,7 +119,7 @@ impl Rtc {
     pub fn listen_alarm(&mut self) {
         // Enable alarm interrupt
         self.perform_write(|s| {
-            s.regs.inten.modify(|_, w| w.alrmie().set_bit());
+            s.regs.inten().modify(|_, w| w.alrmie().set_bit());
         })
     }
 
@@ -127,43 +127,43 @@ impl Rtc {
     pub fn unlisten_alarm(&mut self) {
         // Disable alarm interrupt
         self.perform_write(|s| {
-            s.regs.inten.modify(|_, w| w.alrmie().clear_bit());
+            s.regs.inten().modify(|_, w| w.alrmie().clear_bit());
         })
     }
 
     /// Reads the current counter
     pub fn current_time(&self) -> u32 {
         // Wait for the APB1 interface to be ready
-        while !self.regs.ctl.read().rsynf().bit() {}
+        while !self.regs.ctl().read().rsynf().bit() {}
 
-        self.regs.cnth.read().bits() << 16 | self.regs.cntl.read().bits()
+        self.regs.cnth().read().bits() << 16 | self.regs.cntl().read().bits()
     }
 
     /// Enables the RTC second interrupt.
     /// This interrupt triggers whenever the RTC counter increases.
     pub fn listen_seconds(&mut self) {
-        self.perform_write(|s| s.regs.inten.modify(|_, w| w.scie().set_bit()))
+        self.perform_write(|s| s.regs.inten().modify(|_, w| w.scie().set_bit()))
     }
 
     /// Disables the RTC second interrupt
     pub fn unlisten_seconds(&mut self) {
-        self.perform_write(|s| s.regs.inten.modify(|_, w| w.scie().clear_bit()))
+        self.perform_write(|s| s.regs.inten().modify(|_, w| w.scie().clear_bit()))
     }
 
     /// Clears the RTC second interrupt flag
     pub fn clear_second_flag(&mut self) {
-        self.perform_write(|s| s.regs.ctl.modify(|_, w| w.scif().clear_bit()))
+        self.perform_write(|s| s.regs.ctl().modify(|_, w| w.scif().clear_bit()))
     }
 
     /// Clears the RTC alarm interrupt flag
     pub fn clear_alarm_flag(&mut self) {
-        self.perform_write(|s| s.regs.ctl.modify(|_, w| w.alrmif().clear_bit()))
+        self.perform_write(|s| s.regs.ctl().modify(|_, w| w.alrmif().clear_bit()))
     }
 
     /// Return `Ok(())` if the second flag is set, `Err(nb::WouldBlock)` otherwise.
     pub fn wait_second(&mut self) -> nb::Result<(), Infallible> {
-        if self.regs.ctl.read().scif().bit() {
-            self.regs.ctl.modify(|_, w| w.scif().clear_bit());
+        if self.regs.ctl().read().scif().bit() {
+            self.regs.ctl().modify(|_, w| w.scif().clear_bit());
             Ok(())
         } else {
             Err(nb::Error::WouldBlock)
@@ -184,8 +184,8 @@ impl Rtc {
       ```
     */
     pub fn wait_alarm(&mut self) -> nb::Result<(), Infallible> {
-        if self.regs.ctl.read().alrmif().bit() {
-            self.regs.ctl.modify(|_, w| w.alrmif().clear_bit());
+        if self.regs.ctl().read().alrmif().bit() {
+            self.regs.ctl().modify(|_, w| w.alrmif().clear_bit());
             Ok(())
         } else {
             Err(nb::Error::WouldBlock)
@@ -199,16 +199,16 @@ impl Rtc {
     */
     fn perform_write(&mut self, func: impl Fn(&mut Self)) {
         // Wait for the last write operation to be done
-        while !self.regs.ctl.read().lwoff().bit() {}
+        while !self.regs.ctl().read().lwoff().bit() {}
         // Put the clock into config mode
-        self.regs.ctl.modify(|_, w| w.cmf().set_bit());
+        self.regs.ctl().modify(|_, w| w.cmf().set_bit());
 
         // Perform the write operation
         func(self);
 
         // Take the device out of config mode
-        self.regs.ctl.modify(|_, w| w.cmf().clear_bit());
+        self.regs.ctl().modify(|_, w| w.cmf().clear_bit());
         // Wait for the write to be done
-        while !self.regs.ctl.read().lwoff().bit() {}
+        while !self.regs.ctl().read().lwoff().bit() {}
     }
 }

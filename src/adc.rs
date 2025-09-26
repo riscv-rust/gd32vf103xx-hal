@@ -252,11 +252,11 @@ macro_rules! adc_hal {
             #[inline(always)]
             pub fn set_external_trigger(&mut self, trigger: ETSRC_A) {
                 // Actually safe since the resulting u8 comes from our From<> impl
-                self.rb.ctl1.modify(|_, w| unsafe { w.etsrc().bits(trigger.into()) })
+                self.rb.ctl1().modify(|_, w| unsafe { w.etsrc().bits(trigger.into()) })
             }
 
             fn power_up(&mut self) {
-                self.rb.ctl1.modify(|_, w| w.adcon().set_bit());
+                self.rb.ctl1().modify(|_, w| w.adcon().set_bit());
 
                 // The reference manual says that a stabilization time is needed after power_up,
                 // this time can be found in the datasheets.
@@ -266,7 +266,7 @@ macro_rules! adc_hal {
             }
 
             fn power_down(&mut self) {
-                self.rb.ctl1.modify(|_, w| w.adcon().clear_bit());
+                self.rb.ctl1().modify(|_, w| w.adcon().clear_bit());
             }
 
             fn reset(&mut self, rcu: &mut Rcu) {
@@ -283,25 +283,25 @@ macro_rules! adc_hal {
 
             fn calibrate(&mut self) {
                 // Reset calibration
-                self.rb.ctl1.modify(|_, w| w.rstclb().set_bit());
-                while self.rb.ctl1.read().rstclb().bit_is_set() {}
+                self.rb.ctl1().modify(|_, w| w.rstclb().set_bit());
+                while self.rb.ctl1().read().rstclb().bit_is_set() {}
 
                 // Calibrate
-                self.rb.ctl1.modify(|_, w| w.clb().set_bit());
-                while self.rb.ctl1.read().clb().bit_is_set() {}
+                self.rb.ctl1().modify(|_, w| w.clb().set_bit());
+                while self.rb.ctl1().read().clb().bit_is_set() {}
             }
 
             fn setup_oneshot(&mut self) {
-                self.rb.ctl1.modify(|_, w| unsafe { w
+                self.rb.ctl1().modify(|_, w| unsafe { w
                     .ctn().clear_bit()
                     .eterc().set_bit()
                     .etsrc().bits(0b111)
                 });
-                self.rb.ctl0.modify(|_, w| w
+                self.rb.ctl0().modify(|_, w| w
                     .sm().clear_bit()
                     .disrc().set_bit()
                 );
-                self.rb.rsq0.modify(|_, w| unsafe { w.rl().bits(0b0) });
+                self.rb.rsq0().modify(|_, w| unsafe { w.rl().bits(0b0) });
             }
 
             fn set_channel_sample_time(&mut self, chan: u8, sample_time: SampleTime) {
@@ -310,24 +310,24 @@ macro_rules! adc_hal {
                 // Safe because the value is controlled by our From<SampleTime> for u8
                 unsafe {
                     match chan {
-                        0 => self.rb.sampt1.modify(|_, w| w.spt0().bits(sample_time)),
-                        1 => self.rb.sampt1.modify(|_, w| w.spt1().bits(sample_time)),
-                        2 => self.rb.sampt1.modify(|_, w| w.spt2().bits(sample_time)),
-                        3 => self.rb.sampt1.modify(|_, w| w.spt3().bits(sample_time)),
-                        4 => self.rb.sampt1.modify(|_, w| w.spt4().bits(sample_time)),
-                        5 => self.rb.sampt1.modify(|_, w| w.spt5().bits(sample_time)),
-                        6 => self.rb.sampt1.modify(|_, w| w.spt6().bits(sample_time)),
-                        7 => self.rb.sampt1.modify(|_, w| w.spt7().bits(sample_time)),
-                        8 => self.rb.sampt1.modify(|_, w| w.spt8().bits(sample_time)),
-                        9 => self.rb.sampt1.modify(|_, w| w.spt9().bits(sample_time)),
-                        10 => self.rb.sampt0.modify(|_, w| w.spt10().bits(sample_time)),
-                        11 => self.rb.sampt0.modify(|_, w| w.spt11().bits(sample_time)),
-                        12 => self.rb.sampt0.modify(|_, w| w.spt12().bits(sample_time)),
-                        13 => self.rb.sampt0.modify(|_, w| w.spt13().bits(sample_time)),
-                        14 => self.rb.sampt0.modify(|_, w| w.spt14().bits(sample_time)),
-                        15 => self.rb.sampt0.modify(|_, w| w.spt15().bits(sample_time)),
-                        16 => self.rb.sampt0.modify(|_, w| w.spt16().bits(sample_time)),
-                        17 => self.rb.sampt0.modify(|_, w| w.spt17().bits(sample_time)),
+                        0 => self.rb.sampt1().modify(|_, w| w.spt0().bits(sample_time)),
+                        1 => self.rb.sampt1().modify(|_, w| w.spt1().bits(sample_time)),
+                        2 => self.rb.sampt1().modify(|_, w| w.spt2().bits(sample_time)),
+                        3 => self.rb.sampt1().modify(|_, w| w.spt3().bits(sample_time)),
+                        4 => self.rb.sampt1().modify(|_, w| w.spt4().bits(sample_time)),
+                        5 => self.rb.sampt1().modify(|_, w| w.spt5().bits(sample_time)),
+                        6 => self.rb.sampt1().modify(|_, w| w.spt6().bits(sample_time)),
+                        7 => self.rb.sampt1().modify(|_, w| w.spt7().bits(sample_time)),
+                        8 => self.rb.sampt1().modify(|_, w| w.spt8().bits(sample_time)),
+                        9 => self.rb.sampt1().modify(|_, w| w.spt9().bits(sample_time)),
+                        10 => self.rb.sampt0().modify(|_, w| w.spt10().bits(sample_time)),
+                        11 => self.rb.sampt0().modify(|_, w| w.spt11().bits(sample_time)),
+                        12 => self.rb.sampt0().modify(|_, w| w.spt12().bits(sample_time)),
+                        13 => self.rb.sampt0().modify(|_, w| w.spt13().bits(sample_time)),
+                        14 => self.rb.sampt0().modify(|_, w| w.spt14().bits(sample_time)),
+                        15 => self.rb.sampt0().modify(|_, w| w.spt15().bits(sample_time)),
+                        16 => self.rb.sampt0().modify(|_, w| w.spt16().bits(sample_time)),
+                        17 => self.rb.sampt0().modify(|_, w| w.spt17().bits(sample_time)),
                         _ => unreachable!(),
                     }
                 }
@@ -338,28 +338,28 @@ macro_rules! adc_hal {
                 let bits = channels.iter().take(6).enumerate().fold(0u32, |s, (i, c)|
                     s | ((*c as u32) << (i * 5))
                 );
-                self.rb.rsq2.write(|w| unsafe { w.bits(bits) });
+                self.rb.rsq2().write(|w| unsafe { w.bits(bits) });
                 if len > 6 {
                     let bits = channels.iter().skip(6).take(6).enumerate().fold(0u32, |s, (i, c)|
                         s | ((*c as u32) << (i * 5))
                     );
-                    self.rb.rsq1.write(|w| unsafe { w.bits(bits) });
+                    self.rb.rsq1().write(|w| unsafe { w.bits(bits) });
                 }
                 if len > 12 {
                     let bits = channels.iter().skip(12).take(4).enumerate().fold(0u32, |s, (i, c)|
                         s | ((*c as u32) << (i * 5))
                     );
-                    self.rb.rsq0.write(|w| unsafe { w.bits(bits) });
+                    self.rb.rsq0().write(|w| unsafe { w.bits(bits) });
                 }
-                self.rb.rsq0.modify(|_, w| unsafe { w.rl().bits((len-1) as u8) });
+                self.rb.rsq0().modify(|_, w| unsafe { w.rl().bits((len-1) as u8) });
             }
 
             fn set_continuous_mode(&mut self, continuous: bool) {
-                self.rb.ctl1.modify(|_, w| w.ctn().bit(continuous));
+                self.rb.ctl1().modify(|_, w| w.ctn().bit(continuous));
             }
 
             fn set_discontinuous_mode(&mut self, channels_count: Option<u8>) {
-                self.rb.ctl0.modify(|_, w| match channels_count {
+                self.rb.ctl0().modify(|_, w| match channels_count {
                     Some(count) => unsafe { w.disrc().set_bit().disnum().bits(count) },
                     None => w.disrc().clear_bit(),
                 })
@@ -380,22 +380,22 @@ macro_rules! adc_hal {
                 // Dummy read in case something accidentally triggered
                 // a conversion by writing to CTL1 without changing any
                 // of the bits
-                self.rb.rdata.read().rdata().bits();
+                self.rb.rdata().read().rdata().bits();
 
                 self.set_channel_sample_time(chan, self.sample_time);
-                self.rb.rsq2.modify(|_, w| unsafe { w.rsq0().bits(chan) });
+                self.rb.rsq2().modify(|_, w| unsafe { w.rsq0().bits(chan) });
 
                 // ADC start conversion of regular sequence
-                self.rb.ctl1.modify(|_, w|
+                self.rb.ctl1().modify(|_, w|
                     w
                     .swrcst().set_bit()
                     .dal().bit(self.align.into())
                 );
-                while self.rb.ctl1.read().swrcst().bit_is_set() {}
+                while self.rb.ctl1().read().swrcst().bit_is_set() {}
                 // ADC wait for conversion results
-                while self.rb.stat.read().eoc().bit_is_clear() {}
+                while self.rb.stat().read().eoc().bit_is_clear() {}
 
-                let res = self.rb.rdata.read().rdata().bits();
+                let res = self.rb.rdata().read().rdata().bits();
                 res
             }
 
@@ -445,8 +445,8 @@ adc_hal!(ADC0: adc0, ADC1: adc1);
 
 impl Adc<ADC0> {
     fn read_aux(&mut self, chan: u8) -> u16 {
-        let tsv_off = if self.rb.ctl1.read().tsvren().bit_is_clear() {
-            self.rb.ctl1.modify(|_, w| w.tsvren().set_bit());
+        let tsv_off = if self.rb.ctl1().read().tsvren().bit_is_clear() {
+            self.rb.ctl1().modify(|_, w| w.tsvren().set_bit());
 
             // The reference manual says that a stabilization time is needed after the powering the
             // sensor, this time can be found in the datasheets.
@@ -461,7 +461,7 @@ impl Adc<ADC0> {
         let val = self.convert(chan);
 
         if tsv_off {
-            self.rb.ctl1.modify(|_, w| w.tsvren().clear_bit());
+            self.rb.ctl1().modify(|_, w| w.tsvren().clear_bit());
         }
 
         val
@@ -592,19 +592,19 @@ impl<PINS, MODE> Receive for AdcDma<PINS, MODE> {
 impl<PINS> TransferPayload for AdcDma<PINS, Continuous> {
     fn start(&mut self) {
         self.channel.start();
-        self.payload.adc.rb.ctl1.modify(|_, w| w.ctn().set_bit());
-        self.payload.adc.rb.ctl1.modify(|_, w| w.adcon().set_bit());
+        self.payload.adc.rb.ctl1().modify(|_, w| w.ctn().set_bit());
+        self.payload.adc.rb.ctl1().modify(|_, w| w.adcon().set_bit());
     }
     fn stop(&mut self) {
         self.channel.stop();
-        self.payload.adc.rb.ctl1.modify(|_, w| w.ctn().clear_bit());
+        self.payload.adc.rb.ctl1().modify(|_, w| w.ctn().clear_bit());
     }
 }
 
 impl<PINS> TransferPayload for AdcDma<PINS, Scan> {
     fn start(&mut self) {
         self.channel.start();
-        self.payload.adc.rb.ctl1.modify(|_, w| w.adcon().set_bit());
+        self.payload.adc.rb.ctl1().modify(|_, w| w.adcon().set_bit());
     }
     fn stop(&mut self) {
         self.channel.stop();
@@ -616,11 +616,11 @@ impl Adc<ADC0> {
     where
         PIN: Channel<ADC0, ID = u8>,
     {
-        self.rb.ctl0.modify(|_, w| w.disrc().clear_bit());
-        self.rb.ctl1.modify(|_, w| w.dal().bit(self.align.into()));
+        self.rb.ctl0().modify(|_, w| w.disrc().clear_bit());
+        self.rb.ctl1().modify(|_, w| w.dal().bit(self.align.into()));
         self.set_channel_sample_time(PIN::channel(), self.sample_time);
-        self.rb.rsq2.modify(|_, w| unsafe { w.rsq0().bits(PIN::channel()) });
-        self.rb.ctl1.modify(|_, w| w.dma().set_bit());
+        self.rb.rsq2().modify(|_, w| unsafe { w.rsq0().bits(PIN::channel()) });
+        self.rb.ctl1().modify(|_, w| w.dma().set_bit());
 
         RxDma { payload: AdcPayload { adc: self, pins, _mode: PhantomData }, channel: dma_ch }
     }
@@ -629,16 +629,16 @@ impl Adc<ADC0> {
     where
         Self: SetChannels<PINS>,
     {
-        self.rb.ctl1.modify(|_, w| w
+        self.rb.ctl1().modify(|_, w| w
             .adcon().clear_bit()
             .dma().clear_bit()
             .ctn().clear_bit()
             .dal().bit(self.align.into())
         );
-        self.rb.ctl0.modify(|_, w| w.sm().set_bit().disrc().clear_bit());
+        self.rb.ctl0().modify(|_, w| w.sm().set_bit().disrc().clear_bit());
         self.set_samples();
         self.set_sequence();
-        self.rb.ctl1.modify(|_, w| w.dma().set_bit().adcon().set_bit());
+        self.rb.ctl1().modify(|_, w| w.dma().set_bit().adcon().set_bit());
 
         RxDma { payload: AdcPayload { adc: self, pins, _mode: PhantomData }, channel: dma_ch }
     }
@@ -652,8 +652,8 @@ where
         self.stop();
 
         let AdcDma { payload, channel } = self;
-        payload.adc.rb.ctl1.modify(|_, w| w.dma().clear_bit());
-        payload.adc.rb.ctl0.modify(|_, w| w.disrc().set_bit());
+        payload.adc.rb.ctl1().modify(|_, w| w.dma().clear_bit());
+        payload.adc.rb.ctl0().modify(|_, w| w.disrc().set_bit());
 
         (payload.adc, payload.pins, channel)
     }
@@ -667,9 +667,9 @@ where
         self.stop();
 
         let AdcDma { payload, channel } = self;
-        payload.adc.rb.ctl1.modify(|_, w| w.dma().clear_bit());
-        payload.adc.rb.ctl0.modify(|_, w| w.disrc().set_bit());
-        payload.adc.rb.ctl0.modify(|_, w| w.sm().clear_bit());
+        payload.adc.rb.ctl1().modify(|_, w| w.dma().clear_bit());
+        payload.adc.rb.ctl0().modify(|_, w| w.disrc().set_bit());
+        payload.adc.rb.ctl0().modify(|_, w| w.sm().clear_bit());
 
         (payload.adc, payload.pins, channel)
     }
@@ -686,7 +686,7 @@ where
         // the transfer
         let (ptr, len) = unsafe { buffer.static_write_buffer() };
         unsafe {
-            self.channel.set_peripheral_address(&(*ADC0::ptr()).rdata as *const _ as u32, false);
+            self.channel.set_peripheral_address(&(*ADC0::ptr()).rdata() as *const _ as u32, false);
             self.channel.set_memory_address(ptr as u32, true);
         }
         self.channel.set_transfer_length(len);
@@ -716,7 +716,7 @@ where
         // until the end of the transfer.
         let (ptr, len) = unsafe { buffer.static_write_buffer() };
         unsafe {
-            self.channel.set_peripheral_address(&(*ADC0::ptr()).rdata as *const _ as u32, false);
+            self.channel.set_peripheral_address(&(*ADC0::ptr()).rdata() as *const _ as u32, false);
             self.channel.set_memory_address(ptr as u32, true);
         }
         self.channel.set_transfer_length(len);

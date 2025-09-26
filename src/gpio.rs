@@ -119,11 +119,11 @@ trait PeripheralAccess {
 
         interrupt::free(|_| {
             if index < 8 {
-                regs.ctl0.modify(|r, w| unsafe {
+                regs.ctl0().modify(|r, w| unsafe {
                     w.bits((r.bits() & mask) | value)
                 });
             } else {
-                regs.ctl1.modify(|r, w| unsafe {
+                regs.ctl1().modify(|r, w| unsafe {
                     w.bits((r.bits() & mask) | value)
                 });
             }
@@ -137,7 +137,7 @@ trait PeripheralAccess {
         let regs = Self::peripheral();
 
         // NOTE(unsafe) atomic write to a stateless register
-        regs.bop.write(|w| unsafe { w.bits(1u32 << index) });
+        regs.bop().write(|w| unsafe { w.bits(1u32 << index) });
     }
 
     #[inline(always)]
@@ -147,7 +147,7 @@ trait PeripheralAccess {
         let regs = Self::peripheral();
 
         // NOTE(unsafe) atomic write to a stateless register
-        regs.bop.write(|w| unsafe { w.bits(1u32 << (16 + index)) });
+        regs.bop().write(|w| unsafe { w.bits(1u32 << (16 + index)) });
     }
 
     #[inline(always)]
@@ -157,7 +157,7 @@ trait PeripheralAccess {
         let regs = Self::peripheral();
 
         let mask = 1u32 << index;
-        regs.istat.read().bits() & mask != 0
+        regs.istat().read().bits() & mask != 0
     }
 
     #[inline(always)]
@@ -167,7 +167,7 @@ trait PeripheralAccess {
         let regs = Self::peripheral();
 
         let mask = 1u32 << index;
-        regs.octl.read().bits() & mask != 0
+        regs.octl().read().bits() & mask != 0
     }
 }
 

@@ -231,27 +231,27 @@ macro_rules! dma {
 
                         pub fn intf(&self) -> $dmaX::intf::R {
                             // NOTE(unsafe) atomic read with no side effects
-                            unsafe { (*$DMAX::ptr()).intf.read() }
+                            unsafe { &*$DMAX::ptr() }.intf().read()
                         }
 
                         pub fn intc(&self) -> &$dmaX::INTC {
-                            unsafe { &(*$DMAX::ptr()).intc }
+                            unsafe { &*$DMAX::ptr() }.intc()
                         }
 
                         pub fn ctl(&self) -> &$dmaX::$CTLX {
-                            unsafe { &(*$DMAX::ptr()).$ctlX }
+                            unsafe { &*$DMAX::ptr() }.$ctlX()
                         }
 
                         pub fn cnt(&self) -> &$dmaX::$CNTX {
-                            unsafe { &(*$DMAX::ptr()).$cntX }
+                            unsafe { &*$DMAX::ptr() }.$cntX()
                         }
 
                         pub fn paddr(&self) -> &$dmaX::$PADDRX {
-                            unsafe { &(*$DMAX::ptr()).$paddrX }
+                            unsafe { &*$DMAX::ptr() }.$paddrX()
                         }
 
                         pub fn maddr(&self) -> &$dmaX::$MADDRX {
-                            unsafe { &(*$DMAX::ptr()).$maddrX }
+                            unsafe { &*$DMAX::ptr() }.$maddrX()
                         }
                     }
 
@@ -433,7 +433,7 @@ macro_rules! dma {
 
                         // reset the DMA control registers (stops all on-going transfers)
                         $(
-                            self.$ctlX.reset();
+                            self.$ctlX().reset();
                         )+
 
                         Channels((), $($CX { _0: () }),+)

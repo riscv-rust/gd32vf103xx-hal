@@ -131,49 +131,49 @@ impl UnconfiguredRcu {
 
         // Switch to the internal clock
         let rcu = unsafe { &*crate::pac::RCU::ptr() };
-        rcu.ctl.modify(|_, w| w.irc8men().set_bit()); // Enable IRC8M oscillator
-        while rcu.ctl.read().irc8mstb().bit_is_clear() {} // Wait for oscillator to stabilize
-        rcu.cfg0.modify(|_, w| unsafe { w.scs().bits(0b00) }); // Switch to the internal oscillator
-        rcu.ctl.modify(|_, w| w.pllen().clear_bit()); // Disable PLL
+        rcu.ctl().modify(|_, w| w.irc8men().set_bit()); // Enable IRC8M oscillator
+        while rcu.ctl().read().irc8mstb().bit_is_clear() {} // Wait for oscillator to stabilize
+        rcu.cfg0().modify(|_, w| unsafe { w.scs().bits(0b00) }); // Switch to the internal oscillator
+        rcu.ctl().modify(|_, w| w.pllen().clear_bit()); // Disable PLL
 
         // Set bus prescalers
-        rcu.cfg0.modify(|_, w| unsafe { w.ahbpsc().bits(0b0000) }); // CK_SYS
-        rcu.cfg0.modify(|_, w| unsafe { w.apb1psc().bits(0b100) }); // CK_AHB / 2
-        rcu.cfg0.modify(|_, w| unsafe { w.apb2psc().bits(0b000) }); // CK_AHB
+        rcu.cfg0().modify(|_, w| unsafe { w.ahbpsc().bits(0b0000) }); // CK_SYS
+        rcu.cfg0().modify(|_, w| unsafe { w.apb1psc().bits(0b100) }); // CK_AHB / 2
+        rcu.cfg0().modify(|_, w| unsafe { w.apb2psc().bits(0b000) }); // CK_AHB
         let apb1_psc = 2;
         let apb2_psc = 1;
 
         if self.hxtal.is_some() {
             // Enable external oscillator
-            rcu.ctl.modify(|_, w| w.hxtalen().set_bit());
+            rcu.ctl().modify(|_, w| w.hxtalen().set_bit());
             // Wait for oscillator to stabilize
-            while rcu.ctl.read().hxtalstb().bit_is_clear() {}
+            while rcu.ctl().read().hxtalstb().bit_is_clear() {}
 
             // Select HXTAL as prescaler input source clock
-            rcu.cfg1.modify(|_, w| w.predv0sel().clear_bit());
+            rcu.cfg1().modify(|_, w| w.predv0sel().clear_bit());
             // Configure the prescaler
-            rcu.cfg1.modify(|_, w| unsafe { w.predv0().bits(predv0_bits) });
+            rcu.cfg1().modify(|_, w| unsafe { w.predv0().bits(predv0_bits) });
         }
 
         if use_pll {
             // Configure PLL input selector
-            rcu.cfg0.modify(|_, w| w.pllsel().bit(pllsel_bit));
+            rcu.cfg0().modify(|_, w| w.pllsel().bit(pllsel_bit));
             // Configure PLL multiplier
-            rcu.cfg0.modify(|_, w| unsafe { w
+            rcu.cfg0().modify(|_, w| unsafe { w
                 .pllmf_4().bit(pllmf_bits & 0x10 != 0)
                 .pllmf_3_0().bits(pllmf_bits & 0xf)
             });
             // Enable PLL
-            rcu.ctl.modify(|_, w| w.pllen().set_bit());
+            rcu.ctl().modify(|_, w| w.pllen().set_bit());
             // Wait for PLL to stabilize
-            while rcu.ctl.read().pllstb().bit_is_clear() {}
+            while rcu.ctl().read().pllstb().bit_is_clear() {}
         } else {
             // Disable PLL
-            rcu.ctl.modify(|_, w| w.pllen().clear_bit());
+            rcu.ctl().modify(|_, w| w.pllen().clear_bit());
         }
 
         // Switch to the configured clock source
-        rcu.cfg0.modify(|_, w| unsafe { w.scs().bits(scs_bits) });
+        rcu.cfg0().modify(|_, w| unsafe { w.scs().bits(scs_bits) });
 
         let usbclk_valid;
         if use_pll {
@@ -187,7 +187,7 @@ impl UnconfiguredRcu {
             usbclk_valid = valid;
 
             // Configure USB prescaler
-            rcu.cfg0.modify(|_, w| unsafe { w.usbfspsc().bits(pr) });
+            rcu.cfg0().modify(|_, w| unsafe { w.usbfspsc().bits(pr) });
         } else {
             usbclk_valid = false;
         }
@@ -328,14 +328,14 @@ macro_rules! bus_enable {
             #[inline(always)]
             fn enable(rcu: &mut Rcu) {
                 interrupt::free(|_| {
-                    rcu.regs.$apben.modify(|_, w| w.$peren().set_bit());
+                    rcu.regs.$apben().modify(|_, w| w.$peren().set_bit());
                 });
             }
 
             #[inline(always)]
             fn disable(rcu: &mut Rcu) {
                 interrupt::free(|_| {
-                    rcu.regs.$apben.modify(|_, w| w.$peren().clear_bit());
+                    rcu.regs.$apben().modify(|_, w| w.$peren().clear_bit());
                 });
             }
         }
@@ -351,8 +351,8 @@ macro_rules! bus {
                 #[inline(always)]
                 fn reset(rcu: &mut Rcu) {
                     interrupt::free(|_| {
-                        rcu.regs.$apbrst.modify(|_, w| w.$perrst().set_bit());
-                        rcu.regs.$apbrst.modify(|_, w| w.$perrst().clear_bit());
+                        rcu.regs.$apbrst().modify(|_, w| w.$perrst().set_bit());
+                        rcu.regs.$apbrst().modify(|_, w| w.$perrst().clear_bit());
                     });
                 }
             }

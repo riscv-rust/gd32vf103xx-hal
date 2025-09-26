@@ -191,7 +191,7 @@ macro_rules! advanced_pwm_timer {
                 /* Advanced TIMER implements a BREAK function that deactivates
                  * the outputs. This bit automatically activates the output when
                  * no break input is present */
-                timer.cchp.modify(|_, w| w.oaen().set_bit());
+                timer.cchp().modify(|_, w| w.oaen().set_bit());
 
                 PwmTimer {
                     timer,
@@ -246,19 +246,19 @@ macro_rules! pwm_timer {
 
             fn disable(&mut self, channel: Self::Channel) {
                 match channel {
-                    Channel::CH0 => self.timer.chctl2.modify(|_r, w| w.ch0en().clear_bit()),
-                    Channel::CH1 => self.timer.chctl2.modify(|_r, w| w.ch1en().clear_bit()),
-                    Channel::CH2 => self.timer.chctl2.modify(|_r, w| w.ch2en().clear_bit()),
-                    Channel::CH3 => self.timer.chctl2.modify(|_r, w| w.ch3en().clear_bit()),
+                    Channel::CH0 => self.timer.chctl2().modify(|_r, w| w.ch0en().clear_bit()),
+                    Channel::CH1 => self.timer.chctl2().modify(|_r, w| w.ch1en().clear_bit()),
+                    Channel::CH2 => self.timer.chctl2().modify(|_r, w| w.ch2en().clear_bit()),
+                    Channel::CH3 => self.timer.chctl2().modify(|_r, w| w.ch3en().clear_bit()),
                 }
             }
 
             fn enable(&mut self, channel: Self::Channel) {
                 match channel {
-                    Channel::CH0 => self.timer.chctl2.modify(|_r, w| w.ch0en().set_bit()),
-                    Channel::CH1 => self.timer.chctl2.modify(|_r, w| w.ch1en().set_bit()),
-                    Channel::CH2 => self.timer.chctl2.modify(|_r, w| w.ch2en().set_bit()),
-                    Channel::CH3 => self.timer.chctl2.modify(|_r, w| w.ch3en().set_bit()),
+                    Channel::CH0 => self.timer.chctl2().modify(|_r, w| w.ch0en().set_bit()),
+                    Channel::CH1 => self.timer.chctl2().modify(|_r, w| w.ch1en().set_bit()),
+                    Channel::CH2 => self.timer.chctl2().modify(|_r, w| w.ch2en().set_bit()),
+                    Channel::CH3 => self.timer.chctl2().modify(|_r, w| w.ch3en().set_bit()),
                 }
             }
 
@@ -281,10 +281,10 @@ macro_rules! pwm_timer {
                 }
                 self.duty[channel as usize] = duty;
                 match channel {
-                    Channel::CH0 => self.timer.ch0cv.write(|w| unsafe { w.bits(duty) }),
-                    Channel::CH1 => self.timer.ch1cv.write(|w| unsafe { w.bits(duty) }),
-                    Channel::CH2 => self.timer.ch2cv.write(|w| unsafe { w.bits(duty) }),
-                    Channel::CH3 => self.timer.ch3cv.write(|w| unsafe { w.bits(duty) }),
+                    Channel::CH0 => self.timer.ch0cv().write(|w| unsafe { w.bits(duty) }),
+                    Channel::CH1 => self.timer.ch1cv().write(|w| unsafe { w.bits(duty) }),
+                    Channel::CH2 => self.timer.ch2cv().write(|w| unsafe { w.bits(duty) }),
+                    Channel::CH3 => self.timer.ch3cv().write(|w| unsafe { w.bits(duty) }),
                 }
             }
 
@@ -292,8 +292,8 @@ macro_rules! pwm_timer {
             where
                 P: Into<Self::Time>,
             {
-                self.timer.ctl0.modify(|_, w| w.cen().clear_bit());
-                self.timer.cnt.reset();
+                self.timer.ctl0().modify(|_, w| w.cen().clear_bit());
+                self.timer.cnt().reset();
 
                 let freq = period.into();
 
@@ -304,8 +304,8 @@ macro_rules! pwm_timer {
                 self.max_duty_cycle = car;
                 self.period = freq;
 
-                self.timer.psc.write(|w| unsafe { w.bits(psc) });
-                self.timer.car.write(|w| unsafe { w.bits(car) });
+                self.timer.psc().write(|w| unsafe { w.bits(psc) });
+                self.timer.car().write(|w| unsafe { w.bits(car) });
 
                 self.timer.chctl0_output().modify(|_r, w| unsafe {
                     w
@@ -329,7 +329,7 @@ macro_rules! pwm_timer {
                 });
 
                 // Enable the timer
-                self.timer.ctl0.write(|w| {
+                self.timer.ctl0().write(|w| {
                     w
                         .updis().clear_bit()
                         .cen().set_bit()
