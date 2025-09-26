@@ -136,7 +136,7 @@ impl Rtc {
         // Wait for the APB1 interface to be ready
         while !self.regs.ctl().read().rsynf().bit() {}
 
-        self.regs.cnth().read().bits() << 16 | self.regs.cntl.read().bits()
+        self.regs.cnth().read().bits() << 16 | self.regs.cntl().read().bits()
     }
 
     /// Enables the RTC second interrupt.
