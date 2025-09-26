@@ -135,7 +135,7 @@ macro_rules! delay {
                     let freq = 1_000_000 / us;
                     self.timer.start(freq.hz());
                     while let Err(_) = self.timer.wait() { }
-                    self.timer.tim.ctl0.modify(|_, w| w.cen().clear_bit());
+                    self.timer.tim.ctl0().modify(|_, w| w.cen().clear_bit());
                 }
             }
 

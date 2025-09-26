@@ -83,20 +83,20 @@ impl Exti {
         unsafe {
             match edge {
                 TriggerEdge::Falling => {
-                    self.raw.ften.modify(|r, w| w.bits(r.bits() | bm));
-                    self.raw.rten.modify(|r, w| w.bits(r.bits() & !bm));
+                    self.raw.ften().modify(|r, w| w.bits(r.bits() | bm));
+                    self.raw.rten().modify(|r, w| w.bits(r.bits() & !bm));
                 },
                 TriggerEdge::Rising => {
-                    self.raw.ften.modify(|r, w| w.bits(r.bits() & !bm));
-                    self.raw.rten.modify(|r, w| w.bits(r.bits() | bm));
+                    self.raw.ften().modify(|r, w| w.bits(r.bits() & !bm));
+                    self.raw.rten().modify(|r, w| w.bits(r.bits() | bm));
                 },
                 TriggerEdge::Both => {
-                    self.raw.ften.modify(|r, w| w.bits(r.bits() | bm));
-                    self.raw.rten.modify(|r, w| w.bits(r.bits() | bm));
+                    self.raw.ften().modify(|r, w| w.bits(r.bits() | bm));
+                    self.raw.rten().modify(|r, w| w.bits(r.bits() | bm));
                 }
             }
 
-            self.raw.inten.modify(|r, w| w.bits(r.bits() | bm));
+            self.raw.inten().modify(|r, w| w.bits(r.bits() | bm));
         }
     }
 
@@ -106,9 +106,9 @@ impl Exti {
         let bm: u32 = 1 << line.0;
 
         unsafe {
-            self.raw.rten.modify(|r, w| w.bits(r.bits() & !bm));
-            self.raw.ften.modify(|r, w| w.bits(r.bits() & !bm));
-            self.raw.inten.modify(|r, w| w.bits(r.bits() & !bm));
+            self.raw.rten().modify(|r, w| w.bits(r.bits() & !bm));
+            self.raw.ften().modify(|r, w| w.bits(r.bits() & !bm));
+            self.raw.inten().modify(|r, w| w.bits(r.bits() & !bm));
         }
     }
 
@@ -118,9 +118,9 @@ impl Exti {
         let bm: u32 = 1 << line.0;
 
         if let ExtiEvent::Enable = enable {
-            unsafe { (*EXTI::ptr()).even.modify(|r, w| w.bits(r.bits() | bm)) };
+            unsafe { (*EXTI::ptr()).even().modify(|r, w| w.bits(r.bits() | bm)) };
         } else {
-            unsafe { (*EXTI::ptr()).even.modify(|r, w| w.bits(r.bits() & !bm)) };
+            unsafe { (*EXTI::ptr()).even().modify(|r, w| w.bits(r.bits() & !bm)) };
         }
     }
 
@@ -128,27 +128,27 @@ impl Exti {
     #[inline]
     pub fn is_pending(line: ExtiLine) -> bool {
         let bm: u32 = 1 << line.0;
-        unsafe { (*EXTI::ptr()).pd.read().bits() & bm != 0 }
+        unsafe { (*EXTI::ptr()).pd().read().bits() & bm != 0 }
     }
 
     /// Clear the pending interrupt flag
     #[inline]
     pub fn clear(line: ExtiLine) {
         let bm: u32 = 1 << line.0;
-        unsafe { (*EXTI::ptr()).pd.write(|w| w.bits(bm)) };
+        unsafe { (*EXTI::ptr()).pd().write(|w| w.bits(bm)) };
     }
 
     /// Request a pending interrupt for this line from software
     #[inline]
     pub fn pend(line: ExtiLine) {
         let bm: u32 = 1 << line.0;
-        unsafe { (*EXTI::ptr()).swiev.modify(|r, w| w.bits(r.bits() | bm)) };
+        unsafe { (*EXTI::ptr()).swiev().modify(|r, w| w.bits(r.bits() | bm)) };
     }
 
     /// Deactivate a software pending request for this line
     #[inline]
     pub fn unpend(line: ExtiLine) {
         let bm: u32 = 1 << line.0;
-        unsafe { (*EXTI::ptr()).swiev.modify(|r, w| w.bits(r.bits() & !bm)) };
+        unsafe { (*EXTI::ptr()).swiev().modify(|r, w| w.bits(r.bits() & !bm)) };
     }
 }

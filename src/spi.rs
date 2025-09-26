@@ -111,7 +111,7 @@ impl<SPI, PINS> Spi<SPI, PINS> where SPI: SpiX
         SPI::reset(rcu);
 
         // disable SS output
-        spi.ctl1.write(|w| w.nssdrv().clear_bit());
+        spi.ctl1().write(|w| w.nssdrv().clear_bit());
 
         let base_freq = SPI::base_frequency(rcu);
 
@@ -131,7 +131,7 @@ impl<SPI, PINS> Spi<SPI, PINS> where SPI: SpiX
         // lsbfirst: MSB first
         // ssm: enable software slave management (NSS pin free for other uses)
         // ssi: set nss high = master mode
-        spi.ctl0.write(|w| unsafe { w
+        spi.ctl0().write(|w| unsafe { w
             .ckph().bit(mode.phase == Phase::CaptureOnSecondTransition)
             .ckpl().bit(mode.polarity == Polarity::IdleHigh)
             .mstmod().set_bit()     // Master mode
@@ -166,10 +166,10 @@ impl<SPI, PINS> Spi<SPI, PINS> where SPI: SpiX
         };
 
         // Disable SPI
-        self.spi.ctl0.modify(|_, w| { w.spien().clear_bit()});
+        self.spi.ctl0().modify(|_, w| { w.spien().clear_bit()});
 
         // Restore config, change frequency and re-enable SPI
-        self.spi.ctl0.modify( |_, w| unsafe { w
+        self.spi.ctl0().modify( |_, w| unsafe { w
             .psc().bits(br)
             .spien().set_bit()
         });
@@ -184,7 +184,7 @@ impl<SPI: SpiX, PINS> crate::hal::spi::FullDuplex<u8> for Spi<SPI, PINS> {
     type Error = Error;
 
     fn read(&mut self) -> nb::Result<u8, Error> {
-        let sr = self.spi.stat.read();
+        let sr = self.spi.stat().read();
 
         Err(if sr.rxorerr().bit_is_set() {
             nb::Error::Other(Error::Overrun)
@@ -193,7 +193,7 @@ impl<SPI: SpiX, PINS> crate::hal::spi::FullDuplex<u8> for Spi<SPI, PINS> {
         } else if sr.crcerr().bit_is_set() {
             nb::Error::Other(Error::Crc)
         } else if sr.rbne().bit_is_set() {
-            let byte = (self.spi.data.read().bits() & 0xff) as u8;
+            let byte = (self.spi.data().read().bits() & 0xff) as u8;
             return Ok(byte);
         } else {
             nb::Error::WouldBlock
@@ -201,7 +201,7 @@ impl<SPI: SpiX, PINS> crate::hal::spi::FullDuplex<u8> for Spi<SPI, PINS> {
     }
 
     fn send(&mut self, byte: u8) -> nb::Result<(), Error> {
-        let sr = self.spi.stat.read();
+        let sr = self.spi.stat().read();
 
         Err(if sr.rxorerr().bit_is_set() {
             nb::Error::Other(Error::Overrun)
@@ -210,7 +210,7 @@ impl<SPI: SpiX, PINS> crate::hal::spi::FullDuplex<u8> for Spi<SPI, PINS> {
         } else if sr.crcerr().bit_is_set() {
             nb::Error::Other(Error::Crc)
         } else if sr.tbe().bit_is_set() {
-            self.spi.data.write(|w| unsafe { w.bits(byte as u16) });
+            self.spi.data().write(|w| unsafe { w.bits(byte as u16) });
             return Ok(());
         } else {
             nb::Error::WouldBlock

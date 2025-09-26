@@ -25,7 +25,7 @@ impl BkpExt for BKP {
         PMU::enable(rcu);
 
         // Enable access to the backup registers
-        pmu.ctl.modify(|_r, w| w.bkpwen().set_bit());
+        pmu.ctl().modify(|_r, w| w.bkpwen().set_bit());
         BackupDomain {
             _regs: self
         }
@@ -51,11 +51,11 @@ impl Lxtal {
     /// Enable and don't wait for stabilization.
     fn just_enable(rcu: &rcu::RegisterBlock) {
         // Enable LXTAL
-        rcu.bdctl
+        rcu.bdctl()
         .modify(|_, w| w.lxtalen().set_bit().lxtalbps().clear_bit());
     }
     fn is_stable(rcu: &rcu::RegisterBlock) -> bool {
-        rcu.bdctl.read().lxtalstb().bit()
+        rcu.bdctl().read().lxtalstb().bit()
     }
     /// Enable the clock and block until stabilized.
     pub fn enable_block(rcu: &Rcu) -> Self {

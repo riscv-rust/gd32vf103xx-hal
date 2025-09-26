@@ -28,7 +28,7 @@ impl FreeWatchdog {
 
     /// Free watchdog stopped when core is halted
     pub fn stop_on_debug(&self, dbg: &DBG, stop: bool) {
-        dbg.ctl.modify(|_, w| w.fwdgt_hold().bit(stop));
+        dbg.ctl().modify(|_, w| w.fwdgt_hold().bit(stop));
     }
 
     fn setup(&self, timeout_ms: u32) {
@@ -42,21 +42,21 @@ impl FreeWatchdog {
         let rl = (timeout_ms * max_rl / max_period).min(max_rl) as u16;
 
         self.access_registers(|fwdgt| {
-            fwdgt.psc.modify(|_, w| unsafe { w.psc().bits(pr) });
-            fwdgt.rld.modify(|_, w| unsafe { w.rld().bits(rl) });
+            fwdgt.psc().modify(|_, w| unsafe { w.psc().bits(pr) });
+            fwdgt.rld().modify(|_, w| unsafe { w.rld().bits(rl) });
         });
     }
 
     fn is_pr_updating(&self) -> bool {
-        self.fwdgt.stat.read().pud().bit()
+        self.fwdgt.stat().read().pud().bit()
     }
 
     /// Returns the interval in ms
     pub fn interval(&self) -> MilliSeconds {
         while self.is_pr_updating() {}
 
-        let pr = self.fwdgt.psc.read().psc().bits();
-        let rl = self.fwdgt.rld.read().rld().bits();
+        let pr = self.fwdgt.psc().read().psc().bits();
+        let rl = self.fwdgt.rld().read().rld().bits();
         let ms = Self::timeout_period(pr, rl);
 
         MilliSeconds(ms)
@@ -83,13 +83,13 @@ impl FreeWatchdog {
     fn access_registers<A, F: FnMut(&FWDGT) -> A>(&self, mut f: F) -> A {
         // Unprotect write access to registers
         self.fwdgt
-            .ctl
+            .ctl()
             .write(|w| unsafe { w.cmd().bits(CMD_ACCESS) });
         let a = f(&self.fwdgt);
 
         // Protect again
         self.fwdgt
-            .ctl
+            .ctl()
             .write(|w| unsafe { w.cmd().bits(CMD_RELOAD) });
         a
     }
@@ -101,14 +101,14 @@ impl WatchdogEnable for FreeWatchdog {
     fn start<T: Into<Self::Time>>(&mut self, period: T) {
         self.setup(period.into().0);
 
-        self.fwdgt.ctl.write(|w| unsafe { w.cmd().bits(CMD_START) });
+        self.fwdgt.ctl().write(|w| unsafe { w.cmd().bits(CMD_START) });
     }
 }
 
 impl Watchdog for FreeWatchdog {
     fn feed(&mut self) {
         self.fwdgt
-            .ctl
+            .ctl()
             .write(|w| unsafe { w.cmd().bits(CMD_RELOAD) });
     }
 }

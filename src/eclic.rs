@@ -126,10 +126,10 @@ impl EclicExt for ECLIC {
     fn reset() {
         let eclic = unsafe { &*Self::ptr() };
 
-        eclic.cliccfg.write(|w| unsafe { w.bits(0) });
-        eclic.mth.write(|w| unsafe { w.bits(0) });
+        eclic.cliccfg().write(|w| unsafe { w.bits(0) });
+        eclic.mth().write(|w| unsafe { w.bits(0) });
 
-        for nr in 0..eclic.clicinfo.read().num_interrupt().bits() as usize {
+        for nr in 0..eclic.clicinfo().read().num_interrupt().bits() as usize {
             eclic.clicints[nr].clicintip.write(|w| unsafe { w.bits(0) });
             eclic.clicints[nr].clicintie.write(|w| unsafe { w.bits(0) });
             eclic.clicints[nr]
@@ -143,22 +143,22 @@ impl EclicExt for ECLIC {
 
     #[inline]
     fn set_threshold_level(level: Level) {
-        unsafe { (*Self::ptr()).mth.write(|w| w.mth().bits(level as u8)) }
+        unsafe { (*Self::ptr()).mth().write(|w| w.mth().bits(level as u8)) }
     }
 
     #[inline]
     fn get_threshold_level() -> Level {
-        unsafe { core::mem::transmute((*Self::ptr()).mth.read().mth().bits() & 0xF) }
+        unsafe { core::mem::transmute((*Self::ptr()).mth().read().mth().bits() & 0xF) }
     }
 
     #[inline]
     fn set_level_priority_bits(lp: LevelPriorityBits) {
-        unsafe { (*Self::ptr()).cliccfg.write(|w| w.nlbits().bits(lp as u8)) }
+        unsafe { (*Self::ptr()).cliccfg().write(|w| w.nlbits().bits(lp as u8)) }
     }
 
     #[inline]
     fn get_level_priority_bits() -> Option<LevelPriorityBits> {
-        match unsafe { (*Self::ptr()).cliccfg.read().nlbits().bits() } {
+        match unsafe { (*Self::ptr()).cliccfg().read().nlbits().bits() } {
             0 => Some(LevelPriorityBits::L0P4),
             1 => Some(LevelPriorityBits::L1P3),
             2 => Some(LevelPriorityBits::L2P2),
@@ -170,7 +170,7 @@ impl EclicExt for ECLIC {
 
     #[inline]
     fn get_level_bits() -> u8 {
-        let bits = unsafe { (*Self::ptr()).cliccfg.read().nlbits().bits() };
+        let bits = unsafe { (*Self::ptr()).cliccfg().read().nlbits().bits() };
 
         core::cmp::min(bits, EFFECTIVE_LEVEL_PRIORITY_BITS)
     }

@@ -231,7 +231,7 @@ macro_rules! dma {
 
                         pub fn intf(&self) -> $dmaX::intf::R {
                             // NOTE(unsafe) atomic read with no side effects
-                            unsafe { (*$DMAX::ptr()).intf.read() }
+                            unsafe { (*$DMAX::ptr()).intf().read() }
                         }
 
                         pub fn intc(&self) -> &$dmaX::INTC {
@@ -433,7 +433,7 @@ macro_rules! dma {
 
                         // reset the DMA control registers (stops all on-going transfers)
                         $(
-                            self.$ctlX.reset();
+                            self.$ctlX().reset();
                         )+
 
                         Channels((), $($CX { _0: () }),+)
