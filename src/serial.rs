@@ -429,7 +429,8 @@ impl<USART: UsartX> crate::hal::serial::Write<u8> for Tx<USART> {
             // NOTE(write_volatile) 8-bit write that's not possible through the svd2rust API
             unsafe {
                 let usart_mut = USART::ptr() as *mut USART::Target;
-                ptr::write_volatile(ptr::addr_of_mut!((*usart_mut).data()) as *mut u8, byte);
+                let mut v = (*usart_mut).data();
+                ptr::write_volatile(ptr::addr_of_mut!(v) as *mut u8, byte);
             }
             Ok(())
         } else {

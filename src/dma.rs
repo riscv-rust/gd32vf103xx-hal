@@ -235,7 +235,7 @@ macro_rules! dma {
                         }
 
                         pub fn intc(&self) -> &$dmaX::INTC {
-                            unsafe { &(*$DMAX::ptr()).intc }
+                            unsafe { &(*$DMAX::ptr()).intc() }
                         }
 
                         pub fn ctl(&self) -> &$dmaX::$CTLX {
