@@ -12,7 +12,7 @@ edition = "2018"
 [dependencies]
 # critical-section only required for doctests
 gd32vf103-pac = { version = "0.5.0", features = ["critical-section"] }
-riscv = "0.6.0"
+riscv = "0.15.0"
 nb = "0.1.2"
 void = { version = "1.0.2", default-features = false }
 cast = { version = "0.2.3", default-features = false }
