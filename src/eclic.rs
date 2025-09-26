@@ -130,13 +130,13 @@ impl EclicExt for ECLIC {
         eclic.mth().write(|w| unsafe { w.bits(0) });
 
         for nr in 0..eclic.clicinfo().read().num_interrupt().bits() as usize {
-            eclic.clicints(nr).clicintip.write(|w| unsafe { w.bits(0) });
-            eclic.clicints(nr).clicintie.write(|w| unsafe { w.bits(0) });
+            eclic.clicints(nr).clicintip().write(|w| unsafe { w.bits(0) });
+            eclic.clicints(nr).clicintie().write(|w| unsafe { w.bits(0) });
             eclic.clicints(nr)
-                .clicintattr
+                .clicintattr()
                 .write(|w| unsafe { w.bits(0) });
             eclic.clicints(nr)
-                .clicintctl
+                .clicintctl()
                 .write(|w| unsafe { w.bits(0) });
         }
     }
@@ -191,7 +191,7 @@ impl EclicExt for ECLIC {
     #[inline]
     unsafe fn unmask(interrupt: Interrupt) {
         (*Self::ptr()).clicints(interrupt as usize)
-            .clicintie
+            .clicintie()
             .write(|w| w.ie().set_bit())
     }
 
@@ -199,7 +199,7 @@ impl EclicExt for ECLIC {
     fn mask(interrupt: Interrupt) {
         unsafe {
             (*Self::ptr()).clicints(interrupt as usize)
-                .clicintie
+                .clicintie()
                 .write(|w| w.ie().clear_bit())
         }
     }
@@ -208,7 +208,7 @@ impl EclicExt for ECLIC {
     fn is_enabled(interrupt: Interrupt) -> bool {
         unsafe {
             (*Self::ptr()).clicints(interrupt as usize)
-                .clicintie
+                .clicintie()
                 .read()
                 .ie()
                 .bit_is_set()
@@ -219,7 +219,7 @@ impl EclicExt for ECLIC {
     fn pend(interrupt: Interrupt) {
         unsafe {
             (*Self::ptr()).clicints(interrupt as usize)
-                .clicintip
+                .clicintip()
                 .write(|w| w.ip().set_bit())
         }
     }
@@ -228,7 +228,7 @@ impl EclicExt for ECLIC {
     fn unpend(interrupt: Interrupt) {
         unsafe {
             (*Self::ptr()).clicints(interrupt as usize)
-                .clicintip
+                .clicintip()
                 .write(|w| w.ip().clear_bit())
         }
     }
@@ -237,7 +237,7 @@ impl EclicExt for ECLIC {
     fn is_pending(interrupt: Interrupt) -> bool {
         unsafe {
             (*Self::ptr()).clicints(interrupt as usize)
-                .clicintip
+                .clicintip()
                 .read()
                 .ip()
                 .bit_is_set()
@@ -248,14 +248,14 @@ impl EclicExt for ECLIC {
     fn set_trigger_type(interrupt: Interrupt, tt: TriggerType) {
         unsafe {
             (*Self::ptr()).clicints(interrupt as usize)
-                .clicintattr
+                .clicintattr()
                 .write(|w| w.trig().bits(tt as u8).shv().clear_bit())
         }
     }
 
     #[inline]
     fn get_trigger_type(interrupt: Interrupt) -> Option<TriggerType> {
-        match unsafe { (*Self::ptr()).clicints(interrupt as usize).clicintattr.read().trig().bits() } {
+        match unsafe { (*Self::ptr()).clicints(interrupt as usize).clicintattr().read().trig().bits() } {
             0 => Some(TriggerType::Level),
             1 => Some(TriggerType::RisingEdge),
             3 => Some(TriggerType::FallingEdge),
@@ -267,7 +267,7 @@ impl EclicExt for ECLIC {
     fn set_level(interrupt: Interrupt, level: Level) {
         let mut intctl = unsafe {
             (*Self::ptr()).clicints(interrupt as usize)
-                .clicintctl
+                .clicintctl()
                 .read()
                 .level_priority()
                 .bits()
@@ -282,7 +282,7 @@ impl EclicExt for ECLIC {
 
         unsafe {
             (*Self::ptr()).clicints(interrupt as usize)
-                .clicintctl
+                .clicintctl()
                 .write(|w| w.level_priority().bits(intctl | level))
         }
     }
@@ -291,7 +291,7 @@ impl EclicExt for ECLIC {
     fn get_level(interrupt: Interrupt) -> Level {
         let intctl = unsafe {
             (*Self::ptr()).clicints(interrupt as usize)
-                .clicintctl
+                .clicintctl()
                 .read()
                 .level_priority()
                 .bits()
@@ -307,7 +307,7 @@ impl EclicExt for ECLIC {
     fn set_priority(interrupt: Interrupt, priority: Priority) {
         let mut intctl = unsafe {
             (*Self::ptr()).clicints(interrupt as usize)
-                .clicintctl
+                .clicintctl()
                 .read()
                 .level_priority()
                 .bits()
@@ -325,7 +325,7 @@ impl EclicExt for ECLIC {
 
         unsafe {
             (*Self::ptr()).clicints(interrupt as usize)
-                .clicintctl
+                .clicintctl()
                 .write(|w| w.level_priority().bits(intctl | priority))
         }
     }
@@ -334,7 +334,7 @@ impl EclicExt for ECLIC {
     fn get_priority(interrupt: Interrupt) -> Priority {
         let intctl = unsafe {
             (*Self::ptr()).clicints(interrupt as usize)
-                .clicintctl
+                .clicintctl()
                 .read()
                 .level_priority()
                 .bits()
