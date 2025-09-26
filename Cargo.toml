@@ -25,3 +25,5 @@ features = ["unproven"]
 
 [features]
 rt = ["gd32vf103-pac/rt"]
+[patch.crates-io]
+gd32vf103-pac = { path = "../gd32vf103-pac" }
