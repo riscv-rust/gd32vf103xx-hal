@@ -7,7 +7,7 @@ categories = ["embedded", "hardware-support", "no-std"]
 description = "HAL for GD32VF103 microcontrollers"
 keywords = ["riscv", "gd32", "hal"]
 license = "ISC"
-edition = "2018"
+edition = "2024"
 
 [dependencies]
 gd32vf103-pac = "0.4.0"
