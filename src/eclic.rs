@@ -1,6 +1,10 @@
 use crate::pac::ECLIC;
 use riscv::interrupt::Nr;
 
+/// The code is based on vendor provided HAL libraries.
+/// Most code come from Firmware\RISCV\env_Eclipse\start.S
+pub mod mode;
+
 const EFFECTIVE_LEVEL_PRIORITY_BITS: u8 = 4;
 
 #[repr(u8)]

@@ -12,6 +12,17 @@ Alternative to [gd32vf103-hal](https://github.com/luojia65/gd32vf103-hal)
 
 ## [Documentation](https://docs.rs/crate/gd32vf103xx-hal)
 
+## Usage
+
+This crate defines a linker script called "device.x". In order to build this crate correctly, you must notify the linker about it. For example, bu ensuring your `.cargo/config.toml` file contains the following:
+
+```
+[target.riscv32imac-unknown-none-elf]
+rustflags = [
+  "-C", "link-arg=-Tdevice.x",
+]
+```
+
 ## License
 
 Copyright 2019 [RISC-V team][team]
