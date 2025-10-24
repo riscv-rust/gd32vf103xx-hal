@@ -6,7 +6,7 @@
 
 > HAL for gd32vf103 variants 
 
-This project is developed and maintained by the [RISC-V team][team].
+This project is developed and maintained by the [`gd32vf103` team][gd32 team].
 
 Alternative to [gd32vf103-hal](https://github.com/luojia65/gd32vf103-hal)
 
@@ -25,7 +25,8 @@ rustflags = [
 
 ## License
 
-Copyright 2019 [RISC-V team][team]
+Copyright 2025 [The risv-rust organization](https://github.com/riscv-rust/teams)
+Copyright 2019 [RISC-V team][risc-v team]
 
 Permission to use, copy, modify, and/or distribute this software for any purpose
 with or without fee is hereby granted, provided that the above copyright notice
@@ -42,8 +43,9 @@ THIS SOFTWARE.
 ## Code of Conduct
 
 Contribution to this crate is organized under the terms of the [Rust Code of
-Conduct][CoC], the maintainer of this crate, the [RISC-V team][team], promises
+Conduct][CoC], the maintainer of this crate, the [`gd32vf103` team][gd32 team], promises
 to intervene to uphold that code of conduct.
 
 [CoC]: CODE_OF_CONDUCT.md
-[team]: https://github.com/rust-embedded/wg#the-risc-v-team
+[risc-v team]: https://github.com/rust-embedded/wg#the-risc-v-team
+[gd32 team]: https://github.com/riscv-rust/teams#the-gd32vf103-team
